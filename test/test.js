@@ -7,7 +7,7 @@ const NUMBER = 1000000
 const makeRequests = async function() {
   let returned = false
   let promise = new Promise(async(resolve, reject) => {
-    for (let r=0;r<30;r++) {
+    for (let r=0;r<35;r++) {
       queryReplayData(NUMBER+r*100).then(() => { }).catch((e) => {
         if (!returned) {
           returned = true
@@ -20,19 +20,21 @@ const makeRequests = async function() {
 }
 
 describe('getAPIData()', function() {
-  it('Should return an empty array for a high number', async function() {
+  it('Should return an empty array for a high number', async() => {
     const result = await queryReplayData(HIGH_NUMBER)
-    expect(result === [])
+    expect(0).to.equal(result.length)
   })
-  it('Should return an array with api_id replay objects', async function() {
+  it('Should return an array with id based replay objects', async() => {
     const result = await queryReplayData(NUMBER)
-    expect(result[0].hasOwnProperty('api_id'))
+    const replay = result[0]
+    expect(true).to.equal(replay.hasOwnProperty('id'))
   })
-  it('Should give too many requests error for too many requests', async function() {
+  it('Should give too many requests error for too many requests', async() => {
     try {
-      await makeRequests
+      let result = await makeRequests()
+      console.log({result})
     } catch (e) {
-      return expect(e.message.includes(TOO_MANY_REQUESTS))
+      return expect(true).to.equal(e.message.includes(TOO_MANY_REQUESTS))
     }
   })
 })
