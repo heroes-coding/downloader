@@ -7,6 +7,7 @@ const { getFile } = require('./s3')
 const archiver = require('archiver')
 const zlib = require('zlib')
 const { asleep, starlog } = require('./helpers/tiny_helpers')
+const MPQArchive = require('empeeku/mpyq').MPQArchive
 const restTime = 10000
 const sleepTime = 60000
 const DOWNLOAD_ERROR = 'download error'
@@ -20,7 +21,21 @@ const downloadAndAppendToArchive = async(fileInfo) => {
   try {
     fileInfo = await getFile(fileInfo)
     const { file, filename } = fileInfo
-    arch.append(file,{ name: filename })
+    const archive = new MPQArchive(file)
+    const header = archive.header.userDataHeader.content
+    const details = archive.readFile('replay.details')
+    const atts = archive.readFile('replay.attributes.events')
+    const init = archive.readFile('replay.initData')
+    const messages = archive.readFile('replay.message.events')
+    const lobby = archive.readFile('replay.server.battlelobby')
+    const trackers = archive.readFile('replay.tracker.events')
+    arch.append(header,{ name: `header-${filename}`})
+    arch.append(details,{ name: `details-${filename}`})
+    arch.append(atts,{ name: `atts-${filename}`})
+    arch.append(init,{ name: `init-${filename}`})
+    arch.append(messages,{ name: `messages-${filename}`})
+    arch.append(lobby,{ name: `lobby-${filename}`})
+    arch.append(trackers,{ name: `trackers-${filename}`})
   } catch (e) {
     console.log(e)
   } finally {
@@ -49,11 +64,11 @@ const downloadReplays = async(results) => {
       console.log('should be downloading')
       while (openDownloads > 5) await asleep(50)
       openDownloads++
-      downloadAndAppendToArchive(toDownload[f])
+      downloadAndAppendToArchive(toDownload[f],f)
     }
     while (openDownloads > 0) await asleep(50)
     console.log('done downloading')
-    let savename = `/downloads/${toDownload[0].api_id}-${toDownload[nDowns-1].api_id}.zip`
+    let savename = `/downloads/${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`
     const output = fs.createWriteStream(savename)
     arch.finalize()
     arch.pipe(output)
@@ -70,6 +85,7 @@ const start = async(startIndex) => {
   starlog(`Starting to query hotsapi with index ${startIndex}`)
   let results
   // infinite loop
+  let count = 0
   while (true) {
     // initial api query
     try {
@@ -95,6 +111,13 @@ const start = async(startIndex) => {
     }
 
     startIndex = await downloadReplays(results)
+    arch = null // make sure this thing is released from memory first
+    count++
+    if (count>1) {
+      await asleep(60000)
+      process.exit(0)
+    }
+
   } // end of forever loop
 }
 
