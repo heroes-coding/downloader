@@ -11,16 +11,24 @@ const MPQArchive = require('empeeku/mpyq').MPQArchive
 const restTime = 10000
 const sleepTime = 60000
 const DOWNLOAD_ERROR = 'download error'
-const HOTSPromise = getHOTS()
-let HOTS
+const { DOWNLOADS_DB_CONFIG_PATH } = require('./config')
+const { createDatabase } = require('./helpers/postgresql')
+const { user,host,database,password } = require(DOWNLOADS_DB_CONFIG_PATH)
+const downloadsDB = createDatabase(user,host,database,password)
+
+// const HOTSPromise = getHOTS()
+// let HOTS
 let openDownloads, arch
 
-let startIndex = process.argv[2] || getCurrentIndex() // can take a user supplied first index or the last one available
+let startIndex = process.argv[2]
 
 const downloadAndAppendToArchive = async(fileInfo) => {
+  const downloadQuery = `INSERT INTO downloads (id,filename,downloaded) VALUES ($1,$2,$3)`
+  let downloadValues
+  const { filename, id } = fileInfo
   try {
     fileInfo = await getFile(fileInfo)
-    const { file, filename } = fileInfo
+    const { file } = fileInfo
     const archive = new MPQArchive(file)
     const header = archive.header.userDataHeader.content
     const details = archive.readFile('replay.details')
@@ -29,16 +37,23 @@ const downloadAndAppendToArchive = async(fileInfo) => {
     const messages = archive.readFile('replay.message.events')
     const lobby = archive.readFile('replay.server.battlelobby')
     const trackers = archive.readFile('replay.tracker.events')
-    arch.append(header,{ name: `header-${filename}`})
-    arch.append(details,{ name: `details-${filename}`})
-    arch.append(atts,{ name: `atts-${filename}`})
-    arch.append(init,{ name: `init-${filename}`})
-    arch.append(messages,{ name: `messages-${filename}`})
-    arch.append(lobby,{ name: `lobby-${filename}`})
-    arch.append(trackers,{ name: `trackers-${filename}`})
+    arch.append(header,{ name: `header-${filename}` })
+    arch.append(details,{ name: `details-${filename}` })
+    arch.append(atts,{ name: `atts-${filename}` })
+    arch.append(init,{ name: `init-${filename}` })
+    arch.append(messages,{ name: `messages-${filename}` })
+    arch.append(lobby,{ name: `lobby-${filename}` })
+    arch.append(trackers,{ name: `trackers-${filename}` })
+    downloadValues = [id,filename,true]
   } catch (e) {
     console.log(e)
+    downloadValues = [id,filename,true]
   } finally {
+    try {
+      await downloadsDB.simpleQuery(downloadQuery,downloadValues)
+    } catch (e) {
+      console.log(e, 'FAILED DB UPDATE')
+    }
     openDownloads--
   }
 }
@@ -47,11 +62,18 @@ const downloadReplays = async(results) => {
   let promise = new Promise(async(resolve, reject) => {
     const nResults = results.length
     const lastID = results[nResults-1].id
-    let toDownload
-    try {
-      toDownload = await checkForPreviouslyDownloaded(results)
-    } catch (e) {
-      throw e
+    let toDownload = []
+    for (let i=0;i<results.length;i++) {
+      let file = results[i]
+      const { id, filename } = file
+      let result
+      try {
+        result = await downloadsDB.simpleQuery(`SELECT * FROM downloads WHERE id = ${id}`)
+      } catch (e) {
+        console.log(e)
+      }
+      if (result.rowCount && result.rows[0].downloaded) continue
+      else toDownload.push({ id, filename })
     }
     const nDowns = toDownload.length
     if (nDowns === 0) {
@@ -79,6 +101,10 @@ const downloadReplays = async(results) => {
 
 const start = async(startIndex) => {
   // starts process and loops through api requests endlessly
+  if (!startIndex) {
+    let result = await downloadsDB.simpleQuery('SELECT max(id) as id FROM downloads')
+    startIndex = result.rows[0].id
+  }
   if (isNaN(startIndex)) throw new Error(`Start index of ${startIndex} is not a number`)
   else startIndex = parseInt(startIndex)
 
@@ -117,7 +143,6 @@ const start = async(startIndex) => {
       await asleep(60000)
       process.exit(0)
     }
-
   } // end of forever loop
 }
 
