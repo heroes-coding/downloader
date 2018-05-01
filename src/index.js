@@ -10,6 +10,7 @@ const { asleep, starlog } = require('./helpers/tiny_helpers')
 const MPQArchive = require('empeeku/mpyq').MPQArchive
 const restTime = 10000
 const sleepTime = 60000
+const format = require('pg-format')
 const DOWNLOAD_ERROR = 'download error'
 const { DOWNLOADS_DB_CONFIG_PATH } = require('./config')
 const { createDatabase } = require('./helpers/postgresql')
@@ -21,10 +22,8 @@ const downloadsDB = createDatabase(user,host,database,password)
 let openDownloads, arch
 
 let startIndex = process.argv[2]
-
+let downloadResults = []
 const downloadAndAppendToArchive = async(fileInfo) => {
-  const downloadQuery = `INSERT INTO downloads (id,filename,downloaded) VALUES ($1,$2,$3)`
-  let downloadValues
   const { filename, id } = fileInfo
   try {
     fileInfo = await getFile(fileInfo)
@@ -44,18 +43,11 @@ const downloadAndAppendToArchive = async(fileInfo) => {
     arch.append(messages,{ name: `messages-${filename}` })
     arch.append(lobby,{ name: `lobby-${filename}` })
     arch.append(trackers,{ name: `trackers-${filename}` })
-    downloadValues = [id,filename,true]
+    downloadResults.push([id,filename,true])
   } catch (e) {
     console.log(e)
-    downloadValues = [id,filename,true]
-  } finally {
-    try {
-      await downloadsDB.simpleQuery(downloadQuery,downloadValues)
-    } catch (e) {
-      console.log(e, 'FAILED DB UPDATE')
-    }
-    openDownloads--
-  }
+    downloadResults.push([id,filename,false])
+  } finally { openDownloads-- }
 }
 
 const downloadReplays = async(results) => {
@@ -81,6 +73,7 @@ const downloadReplays = async(results) => {
       return resolve(lastID)
     } else console.log(`Got ${nResults} results from hotsapi, should be downloading ${nDowns} of them...`)
     arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
+    downloadResults = []
     openDownloads = 0
     for (let f=0;f<nDowns;f++) {
       console.log('should be downloading')
@@ -93,7 +86,14 @@ const downloadReplays = async(results) => {
     let saveName = `/tempDownloads/${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`
     const output = fs.createWriteStream(saveName)
     arch.finalize()
-    arch.pipe(output).then(() => { fs.renameSync(saveName, saveName.replace('tempDownloads','downloads')) })
+    arch.pipe(output)
+    const query = format('INSERT INTO downloads (id,filename,downloaded) VALUES %L', downloadResults)
+    setTimeout(() => { fs.renameSync(saveName, saveName.replace('tempDownloads','downloads')) }, 3000)
+    try {
+      await downloadsDB.simpleQuery(query)
+    } catch (e) {
+      return reject(e)
+    }
     return resolve(lastID)
   })
   return promise
@@ -135,8 +135,11 @@ const start = async(startIndex) => {
       await asleep(sleepTime)
       continue
     }
-
-    startIndex = await downloadReplays(results)
+    try {
+      startIndex = await downloadReplays(results)
+    } catch (e) {
+      console.log(e)
+    }
     arch = null // make sure this thing is released from memory first
     count++
     if (count>1) {
