@@ -90,10 +90,10 @@ const downloadReplays = async(results) => {
     }
     while (openDownloads > 0) await asleep(50)
     console.log('done downloading')
-    let savename = `/downloads/${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`
-    const output = fs.createWriteStream(savename)
+    let saveName = `/tempDownloads/${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`
+    const output = fs.createWriteStream(saveName)
     arch.finalize()
-    arch.pipe(output)
+    arch.pipe(output).then(() => { fs.renameSync(saveName, saveName.replace('tempDownloads','downloads')) })
     return resolve(lastID)
   })
   return promise
