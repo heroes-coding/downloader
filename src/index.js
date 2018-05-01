@@ -76,7 +76,6 @@ const downloadReplays = async(results) => {
     downloadResults = []
     openDownloads = 0
     for (let f=0;f<nDowns;f++) {
-      console.log('should be downloading')
       while (openDownloads > 5) await asleep(50)
       openDownloads++
       downloadAndAppendToArchive(toDownload[f],f)
@@ -111,7 +110,6 @@ const start = async(startIndex) => {
   starlog(`Starting to query hotsapi with index ${startIndex}`)
   let results
   // infinite loop
-  let count = 0
   while (true) {
     // initial api query
     try {
@@ -141,11 +139,6 @@ const start = async(startIndex) => {
       console.log(e)
     }
     arch = null // make sure this thing is released from memory first
-    count++
-    if (count>1) {
-      await asleep(60000)
-      process.exit(0)
-    }
   } // end of forever loop
 }
 
