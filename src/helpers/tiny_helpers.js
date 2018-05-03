@@ -11,7 +11,15 @@ const starlog = (m) => {
   console.log(`\n${s}\n*** ${m} ***\n${s}\n`)
 }
 
+const NS_PER_SEC = 1e9
+const addTiming = (timings,startTime,type) => {
+  const diff = process.hrtime(startTime)
+  const microseconds = Math.round((diff[0] * NS_PER_SEC + diff[1])/1000)
+  timings[type] = microseconds
+}
+
 module.exports = {
   asleep,
-  starlog
+  starlog,
+  addTiming
 }

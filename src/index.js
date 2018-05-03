@@ -6,7 +6,7 @@ const fs = require('fs')
 const { getFile } = require('./s3')
 const archiver = require('archiver')
 const zlib = require('zlib')
-const { asleep, starlog } = require('./helpers/tiny_helpers')
+const { asleep, starlog, addTiming } = require('./helpers/tiny_helpers')
 const MPQArchive = require('empeeku/mpyq').MPQArchive
 const restTime = 10000
 const sleepTime = 60000
@@ -58,6 +58,8 @@ const downloadReplays = async(results) => {
     const nResults = results.length
     const lastID = results[nResults-1].id
     let toDownload = []
+    const timings = {}
+    const startTime = process.hrtime()
     for (let i=0;i<results.length;i++) {
       let file = results[i]
       const { id, filename } = file
@@ -84,7 +86,8 @@ const downloadReplays = async(results) => {
       downloadAndAppendToArchive(toDownload[f],f)
     }
     while (openDownloads > 0) await asleep(50)
-    console.log('done downloading')
+    addTiming(timings,startTime,`${nDowns} took`)
+    console.log('done downloading', timings)
     if (testRun) process.exit(0)
     let saveName = `/tempDownloads/${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`
     const output = fs.createWriteStream(saveName)
