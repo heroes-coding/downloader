@@ -105,7 +105,6 @@ const downloadReplays = async(results) => {
   return promise
 }
 
-let cumulativeLoops = 0
 const start = async(startIndex) => {
   // starts process and loops through api requests endlessly
   if (!startIndex) {
@@ -135,19 +134,15 @@ const start = async(startIndex) => {
         continue
       }
     }
+    results = results.slice(0,25) // need to cut down on memory usage significantly.  This should do the trick (250 MB to 75?)
     // extra checks for empty result or strange result
-    if (results.length < 50) {
+    if (results.length < 25) {
       console.log(`Too few results, sleeping for ${sleepTime}ms`)
       await asleep(sleepTime)
       continue
     }
     try {
       startIndex = await downloadReplays(results)
-      cumulativeLoops++
-      if (cumulativeLoops > 100) {
-        console.log('shutting down for restart... no time to figure out the very slow memory leak')
-        process.exit(0)
-      }
     } catch (e) {
       console.log(e)
     }
