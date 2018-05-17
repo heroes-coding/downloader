@@ -105,6 +105,7 @@ const downloadReplays = async(results) => {
   return promise
 }
 
+let cumulativeLoops = 0
 const start = async(startIndex) => {
   // starts process and loops through api requests endlessly
   if (!startIndex) {
@@ -142,6 +143,11 @@ const start = async(startIndex) => {
     }
     try {
       startIndex = await downloadReplays(results)
+      cumulativeLoops++
+      if (cumulativeLoops > 100) {
+        console.log('shutting down for restart... no time to figure out the very slow memory leak')
+        process.exit(0)
+      }
     } catch (e) {
       console.log(e)
     }
