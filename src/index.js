@@ -87,9 +87,9 @@ const downloadReplays = async(results) => {
     }
     while (openDownloads > 0) await asleep(50)
     addTiming(timings,startTime,`${nDowns} took`)
-    console.log('done downloading', timings)
     if (testRun) process.exit(0)
     let saveName = `/tempDownloads/${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`
+    console.log('done downloading', timings, saveName)
     const output = fs.createWriteStream(saveName)
     arch.finalize()
     arch.pipe(output)
