@@ -32,7 +32,7 @@ const loginUrl = formatUrl({
 console.log({loginUrl})
 
 app.get('/auth', (req, res) => {
-  res.send(`<a href="${loginUrl}">Login with Patreon</a>`)
+  return res.redirect(loginUrl)
 })
 
 app.get('/redirect', (req, res) => {
