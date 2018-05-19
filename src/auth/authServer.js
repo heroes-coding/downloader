@@ -29,6 +29,7 @@ const loginUrl = formatUrl({
     state: genPassword()
   }
 })
+console.log({loginUrl})
 
 app.get('/auth', (req, res) => {
   res.send(`<a href="${loginUrl}">Login with Patreon</a>`)
