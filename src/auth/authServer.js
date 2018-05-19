@@ -12,7 +12,7 @@ const { oauth, patreon } = require('patreon')
 const { format: formatUrl } = require('url')
 const { PATREON_KEYS_PATH } = require('../config')
 const { clientId, clientSecret, exemptVIPS } = require(PATREON_KEYS_PATH)
-const redirect = 'http://heroes.report/redirect'
+const redirect = 'https://heroes.report/redirect'
 const oauthClient = oauth(clientId, clientSecret)
 
 // mimic a database
