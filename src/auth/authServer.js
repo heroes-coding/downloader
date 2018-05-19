@@ -79,7 +79,7 @@ app.get('/protected/:id', (req, res) => {
         }
       } else if (rawJson.hasOwnProperty('data') && exemptVIPS.includes(rawJson.data.id)) VIP = true
       const tempPassword = genPassword()
-      return res.redirect(`/?VIP=${VIP}&id=${id}&tempPassword=${tempPassword}`)
+      return res.redirect(`/done.html?VIP=${VIP}&id=${id}&tempPassword=${tempPassword}`)
     }).catch((err) => {
       const { status, statusText } = err
       console.log(err)
