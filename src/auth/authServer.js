@@ -57,7 +57,7 @@ app.get('/redirect', (req, res) => {
     })
 })
 
-app.get('/authorized/:id', (req, res) => {
+app.get('/protected/:id', (req, res) => {
   const { id } = req.params
   // load the user from the database
   const user = database[id]
