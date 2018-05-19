@@ -18,8 +18,18 @@ const addTiming = (timings,startTime,type) => {
   timings[type] = microseconds
 }
 
+const genPassword = function() {
+  let chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let size = Math.floor(Math.random() *30) + 10
+  let password = []
+  for (let i = 0; i < size; i++) password.push(chars[Math.floor(Math.random() * chars.length)])
+  password = password.join("")
+  return password
+}
+
 module.exports = {
   asleep,
   starlog,
-  addTiming
+  addTiming,
+  genPassword
 }

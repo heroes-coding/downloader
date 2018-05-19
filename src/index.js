@@ -1,5 +1,4 @@
 const { queryReplayData, TOO_MANY_REQUESTS, UNKNOWN_ERROR } = require('./api')
-const { getCurrentIndex, checkForPreviouslyDownloaded } = require('./postgres')
 const getHOTS = require('./parser/HOTS/getHOTS')
 const { parseFile } = require('./parser/parser')
 const fs = require('fs')
