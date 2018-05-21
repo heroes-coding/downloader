@@ -15,9 +15,6 @@ const { clientId, clientSecret, exemptVIPS } = require(PATREON_KEYS_PATH)
 const redirect = 'https://heroes.report/redirect'
 const oauthClient = oauth(clientId, clientSecret)
 
-// mimic a database
-let database = {}
-
 const loginUrl = formatUrl({
   protocol: 'https',
   host: 'patreon.com',
@@ -35,40 +32,10 @@ app.get('/auth', (req, res) => {
   return res.redirect(loginUrl)
 })
 
-app.get('/redirect', (req, res) => {
-  const { code } = req.query
-  let token
-  return oauthClient.getTokens(code, redirect)
-    .then((TOKEN) => { // eslint-disable-line camelcase
-      token = TOKEN.access_token
-      const apiClient = patreon(token)
-      return apiClient(`/current_user`)
-    })
-    .then(({ store, rawJson }) => {
-      const { id } = rawJson.data
-      database[id] = { ...rawJson.data, token }
-      console.log(`Saved user ${store.find('user', id).full_name} to the database`)
-      return res.redirect(`/protected/${id}`)
-    })
-    .catch((err) => {
-      console.log(err)
-      console.log('Redirecting to login')
-      res.redirect('/')
-    })
-})
-
-app.get('/protected/:id', (req, res) => {
-  const { id } = req.params
-  // load the user from the database
-  const user = database[id]
-  if (!user || !user.token) {
-    return res.redirect('/')
-  }
-  const apiClient = patreon(user.token)
-  // make api requests concurrently
-  return apiClient(`/current_user`)
-    .then(({ rawJson }) => {
-      // should save this baby to disk to review later
+const resolveData = async(rawJson, res, token, idChecked) => {
+  // need to create temp password, save to database, and return said data
+  let promise = new Promise(async(resolve, reject) => {
+    try {
       let VIP = false
       if (rawJson.hasOwnProperty('included')) {
         try {
@@ -78,14 +45,69 @@ app.get('/protected/:id', (req, res) => {
           //
         }
       } else if (rawJson.hasOwnProperty('data') && exemptVIPS.includes(rawJson.data.id)) VIP = true
+      const { id } = rawJson.data
       const tempPassword = genPassword()
-      return res.redirect(`/done.html?VIP=${VIP}&id=${id}&tempPassword=${tempPassword}`)
-    }).catch((err) => {
-      const { status, statusText } = err
-      console.log(err)
-      return res.json({ status, statusText })
-    })
+      let exists = true
+      if (!idChecked) {
+        const result = await postgresDB.simpleQuery(`SELECT * FROM users WHERE patreon_id = ${parseInt(id)}`)
+        if (result.rowCount === 0) exists = false
+      }
+      const { access_token, refresh_token, expirationTime } = token
+      if (exists) await postgresDB.simpleQuery(`UPDATE users SET temp_password = ($1), access_token = ($2), refresh_token = ($3), credential_expiration = ($4), vip = ($5) WHERE patreon_id = ($6)`, [tempPassword, access_token, refresh_token, expirationTime, VIP, id ])
+      else await postgresDB.simpleQuery(`INSERT INTO users (patreon_id, temp_password, access_token, refresh_token, credential_expiration, vip) VALUES ($1, $2, $3, $4, $5, $6)`, [id, tempPassword, access_token, refresh_token, expirationTime, VIP ])
+      resolve({VIP, id, tempPassword})
+    } catch (e) {
+      console.log(e)
+      res.status(400)
+      resolve({VIP:false, id:"", tempPassword:""})
+    }
+  })
+  return promise
+}
+
+app.get('/redirect', async(req, res) => {
+  // this is for manual logins
+  try {
+    const { code } = req.query
+    let token = await oauthClient.getTokens(code, redirect)
+    token.expirationTime = new Date().getTime() + 2592000000 // 30 days, just short of 31
+    const apiClient = patreon(token.access_token)
+    const { rawJson } = await apiClient(`/current_user`)
+    const data = await resolveData(rawJson, res, token)
+    return res.redirect(`/done.html?VIP=${data.VIP}&id=${data.id}&tempPassword=${data.tempPassword}`)
+  } catch (err) {
+    console.log(err)
+    res.status(400)
+    return res.redirect(`/done.html?VIP=${false}&id=&tempPassword=`)
+  }
 })
+
+app.get('/protected/:idpw', async (req, res) => {
+  // TO DO : get id and password, query for user, if exists check if expires, if expires refresh token if not exists return doesn't exist otherwise return id and password in JSON format
+  // this is for automatic logins
+  let { idpw } = req.params
+  let result
+  try {
+    let [id, pw] = idpw.split("|")
+    id = parseInt(id)
+    result = await postgresDB.simpleQuery("SELECT * FROM users WHERE patreon_id = ($1) and temp_password = ($2)", [id, pw])
+    if (!result.rowCount) throw new Error(`Couldn't find User: ${id} & Password: ${pw}`) // note the user could exist but password is wrong, from another browser for instance.  Keeping error case to one to keep this simple
+    // I'm leaving all of the token stuff the same to perhaps insert the refresh token logic here (which is currently buggy)
+    const { access_token, refresh_token, credential_expiration: expirationTime } = result.rows[0]
+    console.log({ access_token, refresh_token, expirationTime })
+    const apiClient = patreon(access_token)
+    const { rawJson } = await apiClient(`/current_user`)
+    const token = { access_token, refresh_token, expirationTime }
+    const data = await resolveData(rawJson, res, token)
+
+    return res.json({...data, status: 200})
+  } catch (e) {
+    console.log(e.message)
+    res.status(400)
+    return res.json({status: 400})
+  }
+})
+
 
 app.use(bodyParser.json()) // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({ extended: true }))
