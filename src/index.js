@@ -35,7 +35,7 @@ const downloadAndAppendToArchive = async(fileInfo) => {
 
     if (parseFull) {
       const replay = await parseFile(file, HOTS)
-      if (isNaN(replay)) arch.append(zlib.gzipSync(replay, {level: 1}),{ name: filename })
+      if (isNaN(replay)) arch.append(zlib.gzipSync(JSON.stringify(replay), {level: 1}),{ name: filename })
     } else {
       const archive = new MPQArchive(file)
       const header = archive.header.userDataHeader.content
