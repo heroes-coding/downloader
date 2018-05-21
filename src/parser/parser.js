@@ -299,7 +299,8 @@ function parseFile(file, HOTS) {
         try {
           nickMap = uniqueDic['EndOfGameTalentChoices'][0]['m_stringData'][2]['m_value'].toString()
         } catch (e) {
-          console.log('Problem with nick map from map: ' + mapName + ' and game mode: ' + gameMode)
+          // console.log('Problem with nick map from map: ' + mapName + ' and game mode: ' + gameMode)
+          return resolve(99)
         }
         if (nickMaps.hasOwnProperty(nickMap)) {
           mapName = nickMaps[nickMap]
