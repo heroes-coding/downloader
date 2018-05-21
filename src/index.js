@@ -16,35 +16,43 @@ const { createDatabase } = require('./helpers/postgresql')
 const { user,host,database,password } = require(DOWNLOADS_DB_CONFIG_PATH)
 const downloadsDB = createDatabase(user,host,database,password)
 
-// const HOTSPromise = getHOTS()
-// let HOTS
+const HOTSPromise = getHOTS()
+let HOTS
 let openDownloads, arch
 
+let parseFull = true
 let startIndex = process.argv[2]
 let testRun = startIndex === 'test'
 if (testRun) startIndex = undefined
 
 let downloadResults = []
 const downloadAndAppendToArchive = async(fileInfo) => {
+  if (!HOTS) HOTS = await HOTSPromise
   const { filename, id } = fileInfo
   try {
     fileInfo = await getFile(fileInfo)
     const { file } = fileInfo
-    const archive = new MPQArchive(file)
-    const header = archive.header.userDataHeader.content
-    const details = archive.readFile('replay.details')
-    const atts = archive.readFile('replay.attributes.events')
-    const init = archive.readFile('replay.initData')
-    const messages = archive.readFile('replay.message.events')
-    const lobby = archive.readFile('replay.server.battlelobby')
-    const trackers = archive.readFile('replay.tracker.events')
-    arch.append(zlib.gzipSync(header, {level: 1}),{ name: `header-${filename}` })
-    arch.append(zlib.gzipSync(details, {level: 1}),{ name: `details-${filename}` })
-    arch.append(zlib.gzipSync(atts, {level: 1}),{ name: `atts-${filename}` })
-    arch.append(zlib.gzipSync(init, {level: 1}),{ name: `init-${filename}` })
-    arch.append(zlib.gzipSync(messages, {level: 1}),{ name: `messages-${filename}` })
-    arch.append(zlib.gzipSync(lobby, {level: 1}),{ name: `lobby-${filename}` })
-    arch.append(zlib.gzipSync(trackers, {level: 1}),{ name: `trackers-${filename}` })
+
+    if (parseFull) {
+      const replay = await parseFile(file, HOTS)
+      if (isNaN(replay)) arch.append(zlib.gzipSync(replay, {level: 1}),{ name: filename })
+    } else {
+      const archive = new MPQArchive(file)
+      const header = archive.header.userDataHeader.content
+      const details = archive.readFile('replay.details')
+      const atts = archive.readFile('replay.attributes.events')
+      const init = archive.readFile('replay.initData')
+      const messages = archive.readFile('replay.message.events')
+      const lobby = archive.readFile('replay.server.battlelobby')
+      const trackers = archive.readFile('replay.tracker.events')
+      arch.append(zlib.gzipSync(header, {level: 1}),{ name: `header-${filename}` })
+      arch.append(zlib.gzipSync(details, {level: 1}),{ name: `details-${filename}` })
+      arch.append(zlib.gzipSync(atts, {level: 1}),{ name: `atts-${filename}` })
+      arch.append(zlib.gzipSync(init, {level: 1}),{ name: `init-${filename}` })
+      arch.append(zlib.gzipSync(messages, {level: 1}),{ name: `messages-${filename}` })
+      arch.append(zlib.gzipSync(lobby, {level: 1}),{ name: `lobby-${filename}` })
+      arch.append(zlib.gzipSync(trackers, {level: 1}),{ name: `trackers-${filename}` })
+    }
     downloadResults.push([id,filename,true])
   } catch (e) {
     console.log(e)
@@ -86,12 +94,12 @@ const downloadReplays = async(results) => {
     }
     while (openDownloads > 0) await asleep(50)
     addTiming(timings,startTime,`${nDowns} took`)
-    if (testRun) process.exit(0)
     let saveName = `/tempDownloads/${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`
     console.log('done downloading', timings, saveName)
     const output = fs.createWriteStream(saveName)
     arch.finalize()
     arch.pipe(output)
+    if (testRun) process.exit(0)
     const query = format('INSERT INTO downloads (id,filename,downloaded) VALUES %L', downloadResults)
     setTimeout(() => { fs.renameSync(saveName, saveName.replace('tempDownloads','downloads')) }, 3000)
     try {
