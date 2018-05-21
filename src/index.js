@@ -35,6 +35,7 @@ const downloadAndAppendToArchive = async(fileInfo) => {
 
     if (parseFull) {
       const replay = await parseFile(file, HOTS)
+      console.log(replay)
       if (isNaN(replay)) arch.append(zlib.gzipSync(JSON.stringify(replay), {level: 1}),{ name: filename })
     } else {
       const archive = new MPQArchive(file)
@@ -99,7 +100,10 @@ const downloadReplays = async(results) => {
     const output = fs.createWriteStream(saveName)
     arch.finalize()
     arch.pipe(output)
-    if (testRun) process.exit(0)
+    if (testRun) {
+      await asleep(3000)
+      process.exit(0)
+    }
     const query = format('INSERT INTO downloads (id,filename,downloaded) VALUES %L', downloadResults)
     setTimeout(() => { fs.renameSync(saveName, saveName.replace('tempDownloads','downloads')) }, 3000)
     try {
