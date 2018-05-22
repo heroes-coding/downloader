@@ -100,7 +100,7 @@ const downloadReplays = async(results) => {
     while (openDownloads > 0) await asleep(50)
     // add mmrs
     console.log({replays},"\n\n\nBEFORE\n\n\n")
-    replays = addMMRs(replays)
+    replays = await addMMRs(replays)
     console.log({replays},"\n\n\nAFTER\n\n\n")
     const repKeys = Object.keys(replays)
     for (let r=0;r<repKeys.length;r++) {
