@@ -60,7 +60,7 @@ let averageLevelCalculator = function(levels) {
 }
 
 let hashFiles = []
-function saveOpenFiles(gzipReplays=true, playerDictionaryName) {
+function saveOpenFiles(playerDictionaryName) {
   let promise = new Promise(async function(resolve, reject) {
     try {
       const arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })

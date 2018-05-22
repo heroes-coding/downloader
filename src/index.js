@@ -14,9 +14,10 @@ const { addMMRs } = require('./mmr/addMMRs')
 const DOWNLOAD_ERROR = 'download error'
 const { DOWNLOADS_DB_CONFIG_PATH, STATS_PATH } = require('./config')
 const { createDatabase } = require('./helpers/postgresql')
-const { transferReplays } = require('./ssh/functions')
+const { transferReplays, transferPlayerData } = require('./ssh/functions')
 const downloadsDB = createDatabase(DOWNLOADS_DB_CONFIG_PATH)
 const { saveOpenFiles } = require('./binary/binaryConverter')
+const { extractCompressedData } = require('./binary/binaryExtractor')
 const path = require('path')
 
 const HOTSPromise = getHOTS()
@@ -99,9 +100,7 @@ const downloadReplays = async(results) => {
     }
     while (openDownloads > 0) await asleep(50)
     // add mmrs
-    console.log({replays},"\n\n\nBEFORE\n\n\n")
     replays = await addMMRs(replays)
-    console.log({replays},"\n\n\nAFTER\n\n\n")
     const repKeys = Object.keys(replays)
     for (let r=0;r<repKeys.length;r++) {
       const repKey = repKeys[r]
@@ -119,8 +118,11 @@ const downloadReplays = async(results) => {
       await asleep(3000)
       process.exit(0)
     } else {
-      await saveOpenFiles(true, path.join(STATS_PATH, fileName))
+      extractCompressedData(replays, HOTS)
       const query = format('INSERT INTO downloads (id,filename,downloaded) VALUES %L', downloadResults)
+      let playerDataZipPath = path.join(STATS_PATH, `${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`)
+      await saveOpenFiles(playerDataZipPath)
+      transferPlayerData(playerDataZipPath).then(() => { fs.unlinkSync(playerDataZipPath) })
       try {
         await downloadsDB.simpleQuery(query)
       } catch (e) {

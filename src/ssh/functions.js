@@ -6,6 +6,12 @@ const transferReplays = (zipPath) => {
   return executeCommand(command)
 }
 
+const transferPlayerData = (zipPath) => {
+  const command = `scp -i ${FRONTEND_KEYPAIR_PATH} ${zipPath} ubuntu@${FRONTEND_SERVER}:/playerzips`
+  return executeCommand(command)
+}
+
 module.exports = {
-  transferReplays
+  transferReplays,
+  transferPlayerData
 }
