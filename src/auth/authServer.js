@@ -2,7 +2,7 @@
 const express = require('express')
 const app = express()
 const { genPassword } = require('../helpers/tinyHelpers')
-const getProto = require('/local/server/getProto')
+const getProto = require('./getProto')
 const { createDatabase } = require('../helpers/postgresql')
 const { DOWNLOADS_DB_CONFIG_PATH } = require('../config')
 const postgresDB = createDatabase(DOWNLOADS_DB_CONFIG_PATH)
