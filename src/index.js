@@ -14,9 +14,8 @@ const { addMMRs } = require('./mmr/addMMRs')
 const DOWNLOAD_ERROR = 'download error'
 const { DOWNLOADS_DB_CONFIG_PATH, STATS_PATH } = require('./config')
 const { createDatabase } = require('./helpers/postgresql')
-const { user,host,database,password } = require(DOWNLOADS_DB_CONFIG_PATH)
 const { transferReplays } = require('./ssh/functions')
-const downloadsDB = createDatabase(user,host,database,password)
+const downloadsDB = createDatabase(DOWNLOADS_DB_CONFIG_PATH)
 const { saveOpenFiles } = require('./binary/binaryConverter')
 const path = require('path')
 
