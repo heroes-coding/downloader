@@ -60,7 +60,7 @@ let averageLevelCalculator = function(levels) {
 }
 
 let hashFiles = []
-function saveOpenFiles(playerDictionaryName) {
+function saveOpenFiles(playerDictionaryName, stopIndex) {
   let promise = new Promise(async function(resolve, reject) {
     try {
       const arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
@@ -73,24 +73,25 @@ function saveOpenFiles(playerDictionaryName) {
       const output = fs.createWriteStream(playerDictionaryName)
       arch.finalize()
       arch.pipe(output)
-      const replayKeys = Object.keys(dataHolder.replayData)
-      const nReplays = replayKeys.length
-      let barR = new ProgressBar('Replay bytes saved: :bar :percent (:rate/sec) (:current/:total)', {
-        complete: '=',
-        incomplete: ' ',
-        width: 20,
-        total: nReplays
-      })
-      for (let r=0;r<nReplays;r++) {
-        const rep = replayKeys[r]
-        const replayDat = dataHolder.replayData[rep]
-        fs.appendFileSync(path.join(compressedReplaysPath,`${rep}`),replayDat)
-        barR.tick()
-        if (r%1000 === 0) {
-          await asleep(1)
+      if (!stopIndex) {
+        const replayKeys = Object.keys(dataHolder.replayData)
+        const nReplays = replayKeys.length
+        let barR = new ProgressBar('Replay bytes saved: :bar :percent (:rate/sec) (:current/:total)', {
+          complete: '=',
+          incomplete: ' ',
+          width: 20,
+          total: nReplays
+        })
+        for (let r=0;r<nReplays;r++) {
+          const rep = replayKeys[r]
+          const replayDat = dataHolder.replayData[rep]
+          fs.appendFileSync(path.join(compressedReplaysPath,`${rep}`),replayDat)
+          barR.tick()
+          if (r%1000 === 0) {
+            await asleep(1)
+          }
         }
       }
-
       dataHolder.playerData = {}
       dataHolder.replayData = {}
       dataHolder.replayBytes = {}

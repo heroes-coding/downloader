@@ -11,7 +11,6 @@ const restTime = 5000
 const sleepTime = 5000
 const format = require('pg-format')
 const { addMMRs } = require('./mmr/addMMRs')
-const DOWNLOAD_ERROR = 'download error'
 const { DOWNLOADS_DB_CONFIG_PATH, STATS_PATH } = require('./config')
 const { createDatabase } = require('./helpers/postgresql')
 const { transferReplays, transferPlayerData } = require('./ssh/functions')
@@ -26,6 +25,8 @@ let openDownloads, arch
 
 let parseFull = true
 let startIndex = process.argv[2]
+let stopIndex = process.argv[3]
+if (stopIndex) stopIndex = parseInt(stopIndex)
 let testRun = startIndex === 'test'
 if (testRun) startIndex = undefined
 
@@ -103,6 +104,7 @@ const downloadReplays = async(results) => {
     replays = await addMMRs(replays)
     const repKeys = Object.keys(replays)
     for (let r=0;r<repKeys.length;r++) {
+      console.log({repKeys: repKeys.length})
       const repKey = repKeys[r]
       arch.append(zlib.gzipSync(JSON.stringify(replays[repKey]), {level: 1}),{ name: repKey })
     }
@@ -118,16 +120,18 @@ const downloadReplays = async(results) => {
       await asleep(3000)
       process.exit(0)
     } else {
-      extractCompressedData(replays, HOTS)
-      const query = format('INSERT INTO downloads (id,filename,downloaded) VALUES %L', downloadResults)
-      let playerDataZipPath = path.join(STATS_PATH, `${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`)
-      await saveOpenFiles(playerDataZipPath)
-      transferPlayerData(playerDataZipPath).then(() => { fs.unlinkSync(playerDataZipPath) })
-      try {
-        await downloadsDB.simpleQuery(query)
-      } catch (e) {
-        return reject(e)
+      if (!stopIndex) {
+        const query = format('INSERT INTO downloads (id,filename,downloaded) VALUES %L', downloadResults)
+        try {
+          await downloadsDB.simpleQuery(query)
+        } catch (e) {
+          return reject(e)
+        }
       }
+      extractCompressedData(replays, HOTS)
+      let playerDataZipPath = path.join(STATS_PATH, `${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`)
+      await saveOpenFiles(playerDataZipPath, stopIndex)
+      transferPlayerData(playerDataZipPath).then(() => { fs.unlinkSync(playerDataZipPath) })
     }
     return resolve(lastID)
   })
@@ -172,6 +176,10 @@ const start = async(startIndex) => {
     }
     try {
       startIndex = await downloadReplays(results)
+      if (stopIndex && startIndex >= stopIndex) {
+        console.log('exiting because got to stop index')
+        process.exit(0)
+      }
     } catch (e) {
       console.log(e)
     }
