@@ -2,7 +2,8 @@ const chokidar = require('chokidar')
 const fs = require('fs')
 const path = require('path')
 const AdmZip = require('adm-zip')
-const playerDataPath = '/playerzips'
+const playerZipsPath = '/playerzips'
+const playerDataPath = '/players'
 
 const unpackPlayerDataZip = (zipPath, isTest) => {
   console.log(`unzipping ${zipPath}`)
@@ -10,16 +11,18 @@ const unpackPlayerDataZip = (zipPath, isTest) => {
   let zip = new AdmZip(zipPath)
   const zipEntries = zip.getEntries()
   for (let e=0;e<zipEntries.length;e++) {
-    const player = zipEntries[e]
-    const data = zip.getEntry(player).getData()
+    const entry = zipEntries[e]
+    const player = entry.entryName
+    const data = zip.getEntry(entry).getData()
     if (isTest) console.log({player, data})
     else fs.appendFileSync(path.join(playerDataPath,`${player}`),data)
   }
 }
+// /playerzips/9158146-9158169.zip
 
 if (process.argv[2]) unpackPlayerDataZip(process.argv[2], true)
 else {
-  const watcher = chokidar.watch(playerDataPath, {
+  const watcher = chokidar.watch(playerZipsPath, {
     ignored: /(^|[\/\\])\../,
     persistent: true
   })
