@@ -100,10 +100,10 @@ const downloadReplays = async(results) => {
     while (openDownloads > 0) await asleep(50)
     // add mmrs
     replays = addMMRs(replays)
-    console.log({replay1: replays[0]})
     const repKeys = Object.keys(replays)
     for (let r=0;r<repKeys.length;r++) {
       const repKey = repKeys[r]
+      if (r===0) console.log({replay1: replays[repKey]})
       arch.append(zlib.gzipSync(JSON.stringify(replays[repKey]), {level: 1}),{ name: repKey })
     }
     addTiming(timings,startTime,`${nDowns} took`)

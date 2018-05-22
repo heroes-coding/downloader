@@ -111,6 +111,7 @@ socket.on("message", async function(reply) {
     console.log(reply)
     process.exit(0)
   }
+  console.log({reply})
   let [ returnMMRs, prediction, gameMode, returnid ] = reply
   const [ resolve, reject ] = resolveHolder[returnid]
   const mmrPercentiles = returnMMRs.map(x => binarySearch(mmrDic[mmrLetters[gameMode]],x[0]))
