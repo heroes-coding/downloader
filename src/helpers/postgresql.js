@@ -1,6 +1,7 @@
 const { Pool } = require('pg')
 
-const createDatabase = function(user,host,database,password) {
+const createDatabase = function(DB_CONFIG_PATH) {
+  const { user, host, database, password } = require(DB_CONFIG_PATH)
   const pg = new Pool({
     user,
     host,
@@ -13,6 +14,7 @@ const createDatabase = function(user,host,database,password) {
       try {
         result = await pg.query(query, values)
       } catch (e) {
+        console.log('problem with query: ', query, ', and values: ', values)
         return reject(e)
       }
       return resolve(result)
@@ -20,7 +22,8 @@ const createDatabase = function(user,host,database,password) {
     return promise
   }
   return {
-    simpleQuery
+    simpleQuery,
+    pg
   }
 }
 
