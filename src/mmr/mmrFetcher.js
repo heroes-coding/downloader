@@ -2,7 +2,7 @@ const zmq = require('zeromq')
 let socket
 const port = 5560
 const path = require('path')
-const { asleep } = require('../helpers/tiny_helpers')
+const { asleep } = require('../helpers/tinyHelpers')
 const { STATS_PATH, DOWNLOADS_DB_CONFIG_PATH } = require('../config')
 const mmrDic = require(path.join(STATS_PATH,'leagueDic.json'))
 const mmrLetters = {1:'q',3:'h',4:'t',2:'u',5:'q'}

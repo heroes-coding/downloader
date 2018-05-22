@@ -1,7 +1,7 @@
 'use strict'
 const express = require('express')
 const app = express()
-const { genPassword } = require('../helpers/tiny_helpers')
+const { genPassword } = require('../helpers/tinyHelpers')
 const getProto = require('/local/server/getProto')
 const { createDatabase } = require('../helpers/postgresql')
 const { user,host,database: db,password } = require('/local/downloads_db_config.json')

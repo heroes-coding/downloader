@@ -1,5 +1,5 @@
 const { getMMR } = require('./mmrFetcher')
-const { asleep } = require('../helpers/tiny_helpers')
+const { asleep } = require('../helpers/tinyHelpers')
 
 const addMMRs = async(replays) => {
   let promise = new Promise(async(resolve, reject) => {
