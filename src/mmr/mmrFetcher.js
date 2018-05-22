@@ -74,6 +74,10 @@ const addPlayersAndUpdateMMRs = (replay, mmrs) => {
             let values = [repHandle,bnetID,region]
             await database.simpleQuery(query,values)
           } else if (handleNumber && repHandle !== oldHandle && bResult.rows[0].oldhandle !== repHandle) {
+            let query = "UPDATE newusers SET handle = ($1), oldhandle = ($2) WHERE id = ($3) and region =($4);"
+            let values = [repHandle,oldHandle,bnetID,region]
+            await database.simpleQuery(query,values)
+            /*
             let query = `SELECT msl FROM replays WHERE id = ${bResult.rows[0].rids}`
             let oldReplayMSL = await database.simpleQuery(query)
             const oldMSL = oldReplayMSL.rowCount ? oldReplayMSL.rows[0].msl : null
@@ -87,6 +91,7 @@ const addPlayersAndUpdateMMRs = (replay, mmrs) => {
               let values = [oldHandle,bnetID,region]
               await database.simpleQuery(query,values)
             }
+            */
           }
         }
       }
