@@ -104,18 +104,26 @@ const downloadReplays = async(results) => {
     replays = await addMMRs(replays)
     const repKeys = Object.keys(replays)
     for (let r=0;r<repKeys.length;r++) {
-      console.log({repKeys: repKeys.length})
       const repKey = repKeys[r]
       arch.append(zlib.gzipSync(JSON.stringify(replays[repKey]), {level: 1}),{ name: repKey })
     }
+
+    for (let r=0;r<10;r++) {
+      arch.append(JSON.stringify({hi: r}, {level: 1}),{ name: `hi${r}` })
+    }
     addTiming(timings,startTime,`${nDowns} took`)
     let saveName = `/tempDownloads/${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`
-    console.log('done downloading', timings, saveName)
-    const output = fs.createWriteStream(saveName)
-    arch.finalize()
-    arch.pipe(output)
-    if (parseFull) transferReplays(saveName).then(() => { fs.unlinkSync(saveName) })
-    else setTimeout(() => { fs.renameSync(saveName, saveName.replace('tempDownloads','downloads')) }, 3000)
+    console.log('done downloading', timings, saveName, {repKeys: repKeys.length})
+    extractCompressedData(replays, HOTS)
+    setTimeout(async() => {
+      const output = fs.createWriteStream(saveName)
+      arch.finalize()
+      arch.pipe(output)
+      setTimeout(() => { transferReplays(saveName).then(() => { fs.unlinkSync(saveName) }) }, 3000)
+      let playerDataZipPath = path.join(STATS_PATH, `${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`)
+      await saveOpenFiles(playerDataZipPath, stopIndex)
+      setTimeout(() => { transferPlayerData(playerDataZipPath).then(() => { fs.unlinkSync(playerDataZipPath) }) }, 6000)
+    },8000)
     if (testRun) {
       await asleep(3000)
       process.exit(0)
@@ -128,10 +136,6 @@ const downloadReplays = async(results) => {
           return reject(e)
         }
       }
-      extractCompressedData(replays, HOTS)
-      let playerDataZipPath = path.join(STATS_PATH, `${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`)
-      await saveOpenFiles(playerDataZipPath, stopIndex)
-      transferPlayerData(playerDataZipPath).then(() => { fs.unlinkSync(playerDataZipPath) })
     }
     return resolve(lastID)
   })
