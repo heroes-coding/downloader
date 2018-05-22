@@ -10,12 +10,15 @@ const MPQArchive = require('empeeku/mpyq').MPQArchive
 const restTime = 5000
 const sleepTime = 5000
 const format = require('pg-format')
+const { addMMRs } = require('./mmr/addMMRs')
 const DOWNLOAD_ERROR = 'download error'
-const { DOWNLOADS_DB_CONFIG_PATH } = require('./config')
+const { DOWNLOADS_DB_CONFIG_PATH, STATS_PATH } = require('./config')
 const { createDatabase } = require('./helpers/postgresql')
 const { user,host,database,password } = require(DOWNLOADS_DB_CONFIG_PATH)
 const { transferReplays } = require('./ssh/functions')
 const downloadsDB = createDatabase(user,host,database,password)
+const { saveOpenFiles } = require('./binary/binaryConverter')
+const path = require('path')
 
 const HOTSPromise = getHOTS()
 let HOTS
@@ -27,6 +30,7 @@ let testRun = startIndex === 'test'
 if (testRun) startIndex = undefined
 
 let downloadResults = []
+let replays = {}
 const downloadAndAppendToArchive = async(fileInfo) => {
   if (!HOTS) HOTS = await HOTSPromise
   const { filename, id } = fileInfo
@@ -36,7 +40,7 @@ const downloadAndAppendToArchive = async(fileInfo) => {
 
     if (parseFull) {
       const replay = await parseFile(file, HOTS)
-      if (isNaN(replay)) arch.append(zlib.gzipSync(JSON.stringify(replay), {level: 1}),{ name: filename })
+      if (isNaN(replay)) replays[filename] = replay
     } else {
       const archive = new MPQArchive(file)
       const header = archive.header.userDataHeader.content
@@ -87,6 +91,7 @@ const downloadReplays = async(results) => {
     } else console.log(`Got ${nResults} results from hotsapi, should be downloading ${nDowns} of them...`)
     arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
     downloadResults = []
+    replays = {}
     openDownloads = 0
     for (let f=0;f<nDowns;f++) {
       while (openDownloads > 5) await asleep(50)
@@ -94,6 +99,14 @@ const downloadReplays = async(results) => {
       downloadAndAppendToArchive(toDownload[f],f)
     }
     while (openDownloads > 0) await asleep(50)
+    // add mmrs
+    replays = addMMRs(replays)
+    console.log({replay1: replays[0]})
+    const repKeys = Object.keys(replays)
+    for (let r=0;r<repKeys.length;r++) {
+      const repKey = repKeys[r]
+      arch.append(zlib.gzipSync(JSON.stringify(replays[repKey]), {level: 1}),{ name: repKey })
+    }
     addTiming(timings,startTime,`${nDowns} took`)
     let saveName = `/tempDownloads/${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`
     console.log('done downloading', timings, saveName)
@@ -106,6 +119,7 @@ const downloadReplays = async(results) => {
       await asleep(3000)
       process.exit(0)
     } else {
+      await saveOpenFiles(true, path.join(STATS_PATH, fileName))
       const query = format('INSERT INTO downloads (id,filename,downloaded) VALUES %L', downloadResults)
       try {
         await downloadsDB.simpleQuery(query)
