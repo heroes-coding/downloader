@@ -17,11 +17,15 @@ const unpackPlayerDataZip = (zipPath, isTest) => {
     if (isTest) console.log({player, data})
     else fs.appendFileSync(path.join(playerDataPath,`${player}`),data)
   }
+  zip = null
+  if (!isTest) fs.unlinkSync(zipPath)
 }
 // /playerzips/9158146-9158169.zip
 
 if (process.argv[2]) unpackPlayerDataZip(process.argv[2], true)
 else {
+  const curFiles = fs.readdirSync(playerZipsPath)
+  for (let f=0;f<curFiles.length;f++) unpackPlayerDataZip(path.join(playerZipsPath,curFiles[f]))
   const watcher = chokidar.watch(playerZipsPath, {
     ignored: /(^|[\/\\])\../,
     persistent: true
