@@ -1,12 +1,10 @@
 
 const axios = require('axios')
-const HOTSPromise = axios.get("https://heroes.report/local/HOTS.json")
+const HOTS = require('/stats/HOTS.json')
 
 function getHOTS(forceRefresh) {
   // returns HOTS asynchronously
   let promise = new Promise(async(resolve, reject) => {
-    let HOTS = await HOTSPromise
-    HOTS = HOTS.data
     HOTS.nickDic = {}
     let nickKeys = Object.keys(HOTS.nickNames)
     for (let n=0;n<nickKeys.length;n++) {
