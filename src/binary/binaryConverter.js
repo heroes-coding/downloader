@@ -60,19 +60,22 @@ let averageLevelCalculator = function(levels) {
 }
 
 let hashFiles = []
-function saveOpenFiles(playerDictionaryName, stopIndex) {
+function saveOpenFiles(playerDictionaryName, stopIndex, savePlayerData) {
   let promise = new Promise(async function(resolve, reject) {
     try {
-      const arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
-      const playerKeys = Object.keys(dataHolder.playerData)
-      const nPlayers = playerKeys.length
-      for (let p=0;p<nPlayers;p++) {
-        const player = playerKeys[p]
-        arch.append(dataHolder.playerData[player],{ name: player })
+      if (savePlayerData) {
+        const arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
+        const playerKeys = Object.keys(dataHolder.playerData)
+        const nPlayers = playerKeys.length
+        for (let p=0;p<nPlayers;p++) {
+          const player = playerKeys[p]
+          arch.append(dataHolder.playerData[player],{ name: player })
+        }
+        // this immediate finalize might be buggy, bud
+        const output = fs.createWriteStream(playerDictionaryName)
+        arch.finalize()
+        arch.pipe(output)
       }
-      const output = fs.createWriteStream(playerDictionaryName)
-      arch.finalize()
-      arch.pipe(output)
       if (!stopIndex) {
         const replayKeys = Object.keys(dataHolder.replayData)
         const nReplays = replayKeys.length
