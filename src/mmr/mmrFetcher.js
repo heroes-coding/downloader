@@ -94,6 +94,8 @@ const addPlayersAndUpdateMMRs = (replay, mmrs) => {
             */
           }
         }
+        let query = `UPDATE newusers SET rids_count = rids_count + 1 WHERE id=${bnetID} and region=${region}`
+        await database.simpleQuery(query)
       }
     } catch (e) {
       console.log(e)
