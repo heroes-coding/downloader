@@ -15,9 +15,10 @@ function getProto(protoNumber) {
       console.log(url)
       protoData = await axios.get(url)
       protoData = protoData.data
+      fs.writeFileSync('/downloads/protoData.json',protoData)
     } catch (err) { return reject(err) }
     let spawn = require("child_process").spawn
-    let protoProcess = spawn('python',["protocolParser.py", protoData])
+    let protoProcess = spawn('python3',["src/auth/protocolParser.py", protoData], {stdio : "inherit"})
     let spawnResults = []
     protoProcess.stdout.on('data', function(data) { spawnResults.push(data) })
     protoProcess.stdout.on('end', function() {
