@@ -18,7 +18,7 @@ function getProto(protoNumber) {
       fs.writeFileSync('/downloads/protoData.json',protoData)
     } catch (err) { return reject(err) }
     let spawn = require("child_process").spawn
-    let protoProcess = spawn('python3',["src/auth/protocolParser.py", protoData], {stdio : "inherit"})
+    let protoProcess = spawn('python3',["src/auth/protocolParser.py", protoData], {stdio : "pipe"})
     let spawnResults = []
     protoProcess.stdout.on('data', function(data) { spawnResults.push(data) })
     protoProcess.stdout.on('end', function() {
