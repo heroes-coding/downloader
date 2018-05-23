@@ -24,6 +24,7 @@ let HOTS
 let openDownloads, arch
 
 let parseFull = true
+let savePlayerData = false
 let startIndex = process.argv[2]
 let stopIndex = process.argv[3]
 if (stopIndex) stopIndex = parseInt(stopIndex)
@@ -117,8 +118,8 @@ const downloadReplays = async(results) => {
     arch.pipe(output)
     setTimeout(() => { transferReplays(saveName).then(() => { fs.unlinkSync(saveName) }) }, 3000)
     let playerDataZipPath = path.join(STATS_PATH, `${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`)
-    await saveOpenFiles(playerDataZipPath, stopIndex)
-    setTimeout(() => { transferPlayerData(playerDataZipPath).then(() => { fs.unlinkSync(playerDataZipPath) }) }, 3000)
+    await saveOpenFiles(playerDataZipPath, stopIndex, savePlayerData)
+    if (savePlayerData) setTimeout(() => { transferPlayerData(playerDataZipPath).then(() => { fs.unlinkSync(playerDataZipPath) }) }, 3000)
     if (testRun) {
       await asleep(3000)
       process.exit(0)
