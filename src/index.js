@@ -154,6 +154,11 @@ const start = async(startIndex) => {
     // initial api query
     try {
       results = await queryReplayData(startIndex)
+      if (results.length < 2) { // one for last index
+        console.log(`Too few results, sleeping for ${sleepTime}ms`)
+        await asleep(sleepTime)
+        continue
+      }
     } catch (e) {
       const message = e.message
       if (message.includes(TOO_MANY_REQUESTS)) {
@@ -169,11 +174,6 @@ const start = async(startIndex) => {
     }
     results = results.slice(0,25) // need to cut down on memory usage significantly.  This should do the trick (250 MB to 75?)
     // extra checks for empty result or strange result
-    if (!results.length) {
-      console.log(`Too few results, sleeping for ${sleepTime}ms`)
-      await asleep(sleepTime)
-      continue
-    }
     try {
       startIndex = await downloadReplays(results)
       if (stopIndex && startIndex >= stopIndex) {
