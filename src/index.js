@@ -169,7 +169,7 @@ const start = async(startIndex) => {
     }
     results = results.slice(0,25) // need to cut down on memory usage significantly.  This should do the trick (250 MB to 75?)
     // extra checks for empty result or strange result
-    if (results.length < 25) {
+    if (!results.length) {
       console.log(`Too few results, sleeping for ${sleepTime}ms`)
       await asleep(sleepTime)
       continue

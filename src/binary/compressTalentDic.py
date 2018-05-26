@@ -35,10 +35,11 @@ with open('/stats/talentDic.json','w') as TD:
 
 
 talentBuilder = {"builds": talentDic["builds"]}
-for build, bDic in talentDic.items():
-    if build == 'builds':
-        continue
-    buildN = talentDic['builds'][build]
+talentDic = {int(build) if not build == 'builds' else 'builds': data for build, data in talentDic.items()}
+builds = sorted(list([k for k in talentDic.keys() if not k == 'builds']))
+for build in builds:
+    bDic = talentDic[build]
+    buildN = talentDic['builds'][str(build)]
     for hero, levs in bDic.items():
         try:
             hero = int(hero)
@@ -57,7 +58,6 @@ for build, bDic in talentDic.items():
                 else:
                     if tal != talentBuilder[hero][lev+1][bracket][-1][1]:
                         talentBuilder[hero][lev+1][bracket].append([buildN,tal])
-
 
 with open('/stats/talentBuilder.json','w') as TD:
     json.dump(talentBuilder,TD)
