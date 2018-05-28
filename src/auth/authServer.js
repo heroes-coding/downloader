@@ -64,7 +64,7 @@ app.post('/full', async function(req, res) {
   for (let i=0;i<nFiles;i++) {
     if (!vip && days[i] < minDay) buffs.push(new Uint8Array([0,0,0,0])) // sorry
     else {
-      process.stdout(`Day ${days[i]} | `)
+      process.stdout.write(`Day ${days[i]} | `)
       buffs.push(getFile(`${days[i]}-${modes[i]}`, offsets[i]))
     }
   }
