@@ -35,7 +35,7 @@ const addUpdates = (zipPath) => {
     const entry = zipEntries[e]
     const key = entry.entryName
     const data = zip.getEntry(entry).getData()
-    fs.appendFileSync(path.join(fullStatsPath,`${key}`),data)
+    fullStats[key] = Buffer.concat([fullStats[key],data])
   }
   zip = null
 }
