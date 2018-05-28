@@ -18,6 +18,12 @@ const addTiming = (timings,startTime,type) => {
   timings[type] = microseconds
 }
 
+const fakeLaunchDate = (new Date(2015, 5, 1, 20, 0, 0, 0)).getTime()
+
+const dateToDSL = function(date) {
+  return Math.floor((date - 60000*240 - fakeLaunchDate)/(60000*1440))
+}
+
 const genPassword = function() {
   let chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   let size = Math.floor(Math.random() *30) + 10
@@ -31,5 +37,6 @@ module.exports = {
   asleep,
   starlog,
   addTiming,
-  genPassword
+  genPassword,
+  dateToDSL
 }

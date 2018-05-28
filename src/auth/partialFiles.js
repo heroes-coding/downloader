@@ -15,12 +15,12 @@ const getFile = (file,offset) => {
   if (fullStats.hasOwnProperty(file)) {
     const fileBytes = fullStats[file].slice(offset,)
     const nBytes = fileBytes.length
-    if (!nBytes) return Buffer.from(new Uint8Array ([0,0,0,0]))
+    if (!nBytes) return Buffer.from(new Uint8Array([0,0,0,0]))
     else {
-      const lengthBuffer = Buffer.from(new Uint8Array ([nBytes & 0xff,(nBytes >> 8) & 0xff,(nBytes >> 16) & 0xff,(nBytes >> 24) & 0xff]))
+      const lengthBuffer = Buffer.from(new Uint8Array([nBytes & 0xff,(nBytes >> 8) & 0xff,(nBytes >> 16) & 0xff,(nBytes >> 24) & 0xff]))
       return Buffer.concat([lengthBuffer,fileBytes])
     }
-  } else return Buffer.from(new Uint8Array ([0,0,0,0]))
+  } else return Buffer.from(new Uint8Array([0,0,0,0]))
 }
 
 module.exports = getFile

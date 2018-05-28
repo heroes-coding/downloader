@@ -1,7 +1,7 @@
 'use strict'
 const express = require('express')
 const app = express()
-const { genPassword } = require('../helpers/tinyHelpers')
+const { genPassword, dateToDSL } = require('../helpers/tinyHelpers')
 const getProto = require('./getProto')
 const { createDatabase } = require('../helpers/postgresql')
 const { DOWNLOADS_DB_CONFIG_PATH, PATREON_KEYS_PATH } = require('../config')
@@ -32,21 +32,26 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cookieParser())
 app.enable('trust proxy')
 
-app.post('/full', function(req, res) {
-  console.log({body: req.body})
-  let { day: days, mode: modes, offset: offsets } = req.body
-  console.log({ days, modes, offsets })
-
+app.post('/full', async function(req, res) {
+  let { days, modes, offsets, vip, id, pw } = req.body
   let error = false
+  let nFiles = 0
   try {
+    vip = parseInt(vip)
+    if (vip) {
+      id = parseInt(id)
+      const user = await postgresDB.simpleQuery('SELECT * FROM users WHERE patreon_id = ($1) and temp_password = ($2)', [id, pw])
+      if (!user.rowCount || !user.rows[0].vip) vip = 0
+    }
     days = days.map(x => parseInt(x))
     modes = modes.map(x => parseInt(x))
     offsets = offsets.map(x => parseInt(x))
+    nFiles = days.length
   } catch (e) {
-    console.log('params error')
+    console.log(e)
     error = true
   }
-  const nFiles = days.length
+  const minDay = vip ? -365 : dateToDSL(new Date()) - 8
   if (!nFiles || nFiles !== modes.length || nFiles !== offsets.length) error = true
   if (error) {
     console.log(nFiles)
@@ -54,7 +59,10 @@ app.post('/full', function(req, res) {
     return res.json({status: 400})
   }
   const buffs = []
-  for (let i=0;i<nFiles;i++) buffs.push(getFile(`${days[i]}-${modes[i]}`, offsets[i]))
+  for (let i=0;i<nFiles;i++) {
+    if (!vip && days[i] < minDay) buffs.push(Uint8Array([0,0,0,0])) // sorry
+    else buffs.push(getFile(`${days[i]}-${modes[i]}`, offsets[i]))
+  }
   const results = Buffer.concat(buffs) // Buffer.concat(days.map((x,i) => getFile(`${x}-${modes[i]}`, offsets[i])))
   console.log({results})
   return res.send(results)
