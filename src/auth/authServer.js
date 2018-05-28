@@ -45,6 +45,7 @@ app.post('/full', async function(req, res) {
       const user = await postgresDB.simpleQuery('SELECT * FROM users WHERE patreon_id = ($1) and temp_password = ($2)', [id, pw])
       if (!user.rowCount || !user.rows[0].vip) vip = 0
     }
+    console.log({id,vip})
     days = days.map(x => parseInt(x))
     modes = modes.map(x => parseInt(x))
     offsets = offsets.map(x => parseInt(x))
