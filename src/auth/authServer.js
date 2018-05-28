@@ -27,24 +27,35 @@ const loginUrl = formatUrl({
   }
 })
 
+app.use(bodyParser.json()) // to support JSON-encoded bodies
+app.use(bodyParser.urlencoded({ extended: true }))
+app.use(cookieParser())
+app.enable('trust proxy')
+
 app.post('/full', function(req, res) {
+  console.log({body: req.body})
   let { day: days, mode: modes, offset: offsets } = req.body
   console.log({ days, modes, offsets })
+
   let error = false
   try {
-    days = days.split(',').map(x => parseInt(x))
-    modes = modes.split(',').map(x => parseInt(x))
-    offsets = offsets.split(',').map(x => parseInt(x))
+    days = days.map(x => parseInt(x))
+    modes = modes.map(x => parseInt(x))
+    offsets = offsets.map(x => parseInt(x))
   } catch (e) {
+    console.log('params error')
     error = true
   }
   const nFiles = days.length
   if (!nFiles || nFiles !== modes.length || nFiles !== offsets.length) error = true
   if (error) {
+    console.log(nFiles)
     res.status(400)
     return res.json({status: 400})
   }
-  const results = Buffer.concat(days.map((x,i) => getFile(`${x}-${modes[i]}`, offsets[i])))
+  const buffs = []
+  for (let i=0;i<nFiles;i++) buffs.push(getFile(`${days[i]}-${modes[i]}`, offsets[i]))
+  const results = Buffer.concat(buffs) // Buffer.concat(days.map((x,i) => getFile(`${x}-${modes[i]}`, offsets[i])))
   console.log({results})
   return res.send(results)
 })
@@ -128,11 +139,6 @@ app.get('/protected/:idpw', async(req, res) => {
     return res.json({status: 400})
   }
 })
-
-app.use(bodyParser.json()) // to support JSON-encoded bodies
-app.use(bodyParser.urlencoded({ extended: true }))
-app.use(cookieParser())
-app.enable('trust proxy')
 
 app.get('/getProto/:proto', async function(req, res) {
   const proto = req.params.proto
