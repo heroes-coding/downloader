@@ -7,14 +7,13 @@ const fullStatsPath = path.join(STATS_PATH,'compressed')
 const fullStatsUpdatesPath = path.join(STATS_PATH,'compressedUpdates')
 const chokidar = require('chokidar')
 
-
 // delete updates, as they are already loaded into full files
 const updates = fs.readdirSync(fullStatsUpdatesPath)
 const nUpdates = updates.length
 for (let f=0;f<nUpdates;f++) {
   const update = updates[f]
   try {
-    fs.unlinkSync(update)
+    fs.unlinkSync(path.join(fullStatsUpdatesPath,update))
   } catch (e) {
     console.log(e)
   }
