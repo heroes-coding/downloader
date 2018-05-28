@@ -4,16 +4,16 @@ const app = express()
 const { genPassword } = require('../helpers/tinyHelpers')
 const getProto = require('./getProto')
 const { createDatabase } = require('../helpers/postgresql')
-const { DOWNLOADS_DB_CONFIG_PATH } = require('../config')
+const { DOWNLOADS_DB_CONFIG_PATH, PATREON_KEYS_PATH } = require('../config')
 const postgresDB = createDatabase(DOWNLOADS_DB_CONFIG_PATH)
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const { oauth, patreon } = require('patreon')
 const { format: formatUrl } = require('url')
-const { PATREON_KEYS_PATH } = require('../config')
 const { clientId, clientSecret, exemptVIPS } = require(PATREON_KEYS_PATH)
 const redirect = 'https://heroes.report/redirect'
 const oauthClient = oauth(clientId, clientSecret)
+const getFile = require('./partialFiles')
 
 const loginUrl = formatUrl({
   protocol: 'https',
@@ -26,7 +26,28 @@ const loginUrl = formatUrl({
     state: genPassword()
   }
 })
-console.log({loginUrl})
+
+app.post('/full', function(req, res) {
+  let { day: days, mode: modes, offset: offsets } = req.body
+  console.log({ days, modes, offsets })
+  let error = false
+  try {
+    days = days.split(',').map(x => parseInt(x))
+    modes = modes.split(',').map(x => parseInt(x))
+    offsets = offsets.split(',').map(x => parseInt(x))
+  } catch (e) {
+    error = true
+  }
+  const nFiles = days.length
+  if (!nFiles || nFiles !== modes.length || nFiles !== offsets.length) error = true
+  if (error) {
+    res.status(400)
+    return res.json({status: 400})
+  }
+  const results = Buffer.concat(days.map((x,i) => getFile(`${x}-${modes[i]}`, offsets[i])))
+  console.log({results})
+  return res.send(results)
+})
 
 app.get('/auth', (req, res) => {
   return res.redirect(loginUrl)
@@ -82,7 +103,7 @@ app.get('/redirect', async(req, res) => {
   }
 })
 
-app.get('/protected/:idpw', async (req, res) => {
+app.get('/protected/:idpw', async(req, res) => {
   // TO DO : get id and password, query for user, if exists check if expires, if expires refresh token if not exists return doesn't exist otherwise return id and password in JSON format
   // this is for automatic logins
   let { idpw } = req.params
@@ -107,7 +128,6 @@ app.get('/protected/:idpw', async (req, res) => {
     return res.json({status: 400})
   }
 })
-
 
 app.use(bodyParser.json()) // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({ extended: true }))
