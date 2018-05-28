@@ -45,7 +45,6 @@ app.post('/full', async function(req, res) {
       const user = await postgresDB.simpleQuery('SELECT * FROM users WHERE patreon_id = ($1) and temp_password = ($2)', [id, pw])
       if (!user.rowCount || !user.rows[0].vip) vip = 0
     }
-    console.log({id,vip})
     days = days.map(x => parseInt(x))
     modes = modes.map(x => parseInt(x))
     offsets = offsets.map(x => parseInt(x))
@@ -55,6 +54,7 @@ app.post('/full', async function(req, res) {
     error = true
   }
   const minDay = vip ? -365 : dateToDSL(new Date()) - 8
+  console.log({id,vip, minDay})
   if (!nFiles || nFiles !== modes.length || nFiles !== offsets.length) error = true
   if (error) {
     res.status(400)
@@ -63,7 +63,10 @@ app.post('/full', async function(req, res) {
   const buffs = []
   for (let i=0;i<nFiles;i++) {
     if (!vip && days[i] < minDay) buffs.push(new Uint8Array([0,0,0,0])) // sorry
-    else buffs.push(getFile(`${days[i]}-${modes[i]}`, offsets[i]))
+    else {
+      process.stdout(`Day ${days[i]} | `)
+      buffs.push(getFile(`${days[i]}-${modes[i]}`, offsets[i]))
+    }
   }
   const results = Buffer.concat(buffs) // Buffer.concat(days.map((x,i) => getFile(`${x}-${modes[i]}`, offsets[i])))
   console.log(`getting full stuff took ${Math.round(performance.now()-start)} ms`)
