@@ -1,15 +1,52 @@
 const { STATS_PATH } = require('../config')
 const fullStats = {}
+const AdmZip = require('adm-zip')
 const fs = require('fs')
 const path = require('path')
 const fullStatsPath = path.join(STATS_PATH,'compressed')
-const files = fs.readdirSync(fullStatsPath)
+const fullStatsUpdatesPath = path.join(STATS_PATH,'compressedUpdates')
+const chokidar = require('chokidar')
 
+
+// delete updates, as they are already loaded into full files
+const updates = fs.readdirSync(fullStatsUpdatesPath)
+const nUpdates = updates.length
+for (let f=0;f<nUpdates;f++) {
+  const update = updates[f]
+  try {
+    fs.unlinkSync(update)
+  } catch (e) {
+    console.log(e)
+  }
+}
+
+const files = fs.readdirSync(fullStatsPath)
 const nFiles = files.length
 for (let f=0;f<nFiles;f++) {
   const file = files[f]
   fullStats[file] = fs.readFileSync(path.join(fullStatsPath,file))
 }
+
+const addUpdates = (zipPath) => {
+  console.log(`unzipping ${zipPath}`)
+  let zip = new AdmZip(zipPath)
+  const zipEntries = zip.getEntries()
+  for (let e=0;e<zipEntries.length;e++) {
+    const entry = zipEntries[e]
+    const key = entry.entryName
+    const data = zip.getEntry(entry).getData()
+    fs.appendFileSync(path.join(fullStatsPath,`${key}`),data)
+  }
+  zip = null
+}
+
+const watcher = chokidar.watch(fullStatsUpdatesPath, {
+  ignored: /(^|[\/\\])\../,
+  persistent: true
+})
+watcher.on('ready', () => watcher.on('add', file => {
+  setTimeout(async() => { addUpdates(file) }, 3000)
+}))
 
 const getFile = (file,offset) => {
   if (fullStats.hasOwnProperty(file)) {

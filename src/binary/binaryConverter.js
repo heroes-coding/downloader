@@ -10,6 +10,7 @@ const zlib = require('zlib')
 const { STATS_PATH } = require('../config')
 const fPath = path.join(STATS_PATH,'replays')
 const compressedReplaysPath = path.join(STATS_PATH, 'compressed')
+const compressedReplaysUpdatesPath = path.join(STATS_PATH, 'compressedUpdates')
 const { asleep } = require('../helpers/tinyHelpers')
 
 function hashString(input) {
@@ -85,15 +86,21 @@ function saveOpenFiles(playerDictionaryName, stopIndex, savePlayerData) {
           width: 20,
           total: nReplays
         })
+
+        const arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
         for (let r=0;r<nReplays;r++) {
           const rep = replayKeys[r]
           const replayDat = dataHolder.replayData[rep]
           fs.appendFileSync(path.join(compressedReplaysPath,`${rep}`),replayDat)
+          arch.append(replayDat,{ name: rep })
           barR.tick()
           if (r%1000 === 0) {
             await asleep(1)
           }
         }
+        const output = fs.createWriteStream(path.join(compressedReplaysUpdatesPath,path.basename(playerDictionaryName)))
+        arch.finalize()
+        arch.pipe(output)
       }
       dataHolder.playerData = {}
       dataHolder.replayData = {}

@@ -14,6 +14,7 @@ const { clientId, clientSecret, exemptVIPS } = require(PATREON_KEYS_PATH)
 const redirect = 'https://heroes.report/redirect'
 const oauthClient = oauth(clientId, clientSecret)
 const getFile = require('./partialFiles')
+const { performance } = require('perf_hooks')
 
 const loginUrl = formatUrl({
   protocol: 'https',
@@ -33,7 +34,8 @@ app.use(cookieParser())
 app.enable('trust proxy')
 
 app.post('/full', async function(req, res) {
-  let { days, modes, offsets, vip, id, pw } = req.body
+  const start = performance.now()
+  let { day: days, mode: modes, offset: offsets, vip, id, pw } = req.body
   let error = false
   let nFiles = 0
   try {
@@ -54,17 +56,16 @@ app.post('/full', async function(req, res) {
   const minDay = vip ? -365 : dateToDSL(new Date()) - 8
   if (!nFiles || nFiles !== modes.length || nFiles !== offsets.length) error = true
   if (error) {
-    console.log(nFiles)
     res.status(400)
     return res.json({status: 400})
   }
   const buffs = []
   for (let i=0;i<nFiles;i++) {
-    if (!vip && days[i] < minDay) buffs.push(Uint8Array([0,0,0,0])) // sorry
+    if (!vip && days[i] < minDay) buffs.push(new Uint8Array([0,0,0,0])) // sorry
     else buffs.push(getFile(`${days[i]}-${modes[i]}`, offsets[i]))
   }
   const results = Buffer.concat(buffs) // Buffer.concat(days.map((x,i) => getFile(`${x}-${modes[i]}`, offsets[i])))
-  console.log({results})
+  console.log(`getting full stuff took ${Math.round(performance.now()-start)} ms`)
   return res.send(results)
 })
 
