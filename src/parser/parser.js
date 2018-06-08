@@ -316,6 +316,7 @@ function parseFile(file, HOTS) {
               heroes[p] = HOTS.nickDic[nickHero]
             } else {
               console.log("Missing a hero: ",heroes[p], ", and their nickname: ", nickHero, ", and the slug: ",atts.scopes[p+1][4002][0]['value'].toString())
+              console.log("Region is", region)
             }
           }
         }
