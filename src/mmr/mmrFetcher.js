@@ -51,7 +51,11 @@ const addPlayersAndUpdateMMRs = (replay, mmrs) => {
     const msl = replay.r[0]
     const gamemode = replay.r[5]
     if (gamemode === 5) resolve(true)
-    const league = mmrLetters[gamemode]
+    let league = mmrLetters[gamemode]
+    if (!league) {
+      console.log(`Missing a league for this gamemode: ${gamemode}`)
+      league = 'q'
+    }
     try {
       for (let b=0;b<replay.bnetIDs.length;b++) {
         let bnetID = replay.bnetIDs[b]

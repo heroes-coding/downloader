@@ -29,7 +29,9 @@ for build, bDic in talentDic.items():
 
 
 
-
+if os.path.exists("/stats/talentDicBU.json"):
+    os.remove("/stats/talentDicBU.json")
+os.rename('/stats/talentDic.json',"/stats/talentDicBU.json")
 with open('/stats/talentDic.json','w') as TD:
     json.dump(talentDic,TD)
 
@@ -59,5 +61,9 @@ for build in builds:
                     if tal != talentBuilder[hero][lev+1][bracket][-1][1]:
                         talentBuilder[hero][lev+1][bracket].append([buildN,tal])
 
+
+if os.path.exists("/stats/talentBuilderBU.json"):
+    os.remove("/stats/talentBuilderBU.json")
+os.rename('/stats/talentBuilder.json',"/stats/talentBuilderBU.json")
 with open('/stats/talentBuilder.json','w') as TD:
     json.dump(talentBuilder,TD)

@@ -1,5 +1,6 @@
 const axios = require('axios')
-const protoDic = require('/local/protoZips/protoDic.json')
+const { PROTO_PATH } = require('../config')
+const protoDic = require(PROTO_PATH)
 const LZString = require('lz-string')
 const fs = require('fs')
 

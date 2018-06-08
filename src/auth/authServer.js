@@ -1,6 +1,7 @@
 'use strict'
 const express = require('express')
 const app = express()
+const fs = require('fs')
 const { genPassword, dateToDSL } = require('../helpers/tinyHelpers')
 const getProto = require('./getProto')
 const { createDatabase } = require('../helpers/postgresql')
@@ -15,6 +16,7 @@ const redirect = 'https://heroes.report/redirect'
 const oauthClient = oauth(clientId, clientSecret)
 const getFile = require('./partialFiles')
 const { performance } = require('perf_hooks')
+const isWindows = fs.existsSync("C:/")
 
 const loginUrl = formatUrl({
   protocol: 'https',
@@ -28,6 +30,20 @@ const loginUrl = formatUrl({
   }
 })
 
+app.use(function(req, res, next) {
+  // Website you wish to allow to connect
+  res.setHeader('Access-Control-Allow-Origin', 'http://192.168.1.3:3000')
+  // Request methods you wish to allow
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST')
+  // Request headers you wish to allow
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type')
+  // Set to true if you need the website to include cookies in the requests sent
+  // to the API (e.g. in case you use sessions)
+  res.setHeader('Access-Control-Allow-Credentials', true)
+  // Pass to next layer of middleware
+  next()
+})
+
 app.use(bodyParser.json()) // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cookieParser())
@@ -36,15 +52,16 @@ app.enable('trust proxy')
 app.post('/full', async function(req, res) {
   const start = performance.now()
   let { day: days, mode: modes, offset: offsets, vip, id, pw } = req.body
+  console.log({days,modes,offsets,vip,id,pw})
   let error = false
   let nFiles = 0
   try {
     vip = parseInt(vip)
-    if (vip) {
+    if (vip && !isWindows) {
       id = parseInt(id)
       const user = await postgresDB.simpleQuery('SELECT * FROM users WHERE patreon_id = ($1) and temp_password = ($2)', [id, pw])
       if (!user.rowCount || !user.rows[0].vip) vip = 0
-    }
+    } else if (isWindows) vip = 1
     days = days.map(x => parseInt(x))
     modes = modes.map(x => parseInt(x))
     offsets = offsets.map(x => parseInt(x))
@@ -164,4 +181,5 @@ app.put('/getProto', async function(req, res) {
   return res.send(protoCompressed)
 })
 
-app.listen(3000, () => console.log('Auth server listening on port 3000!'))
+const port = isWindows ? 3210 : 3210
+app.listen(port, () => console.log(`Auth server listening on port ${port}`))
