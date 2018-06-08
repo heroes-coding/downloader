@@ -115,6 +115,7 @@ function parseFile(file, HOTS) {
             if (bnetIDIndex === -1) {
               battleTags.push(null)
               console.log('Could not find Battle Tag for ' + heroNames[b])
+              if (heroNames[b] === `Player ${b+1}`) return resolve(98)
               break // breaks out of inner while loop
             }
             const team = lobby.slice(fIndex+bnetIDIndex-9,fIndex+bnetIDIndex-1)
