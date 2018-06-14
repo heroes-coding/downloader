@@ -4,7 +4,7 @@ const { Protocol } = protocolJS
 const MPQArchive = require('empeeku/mpyq').MPQArchive
 const getProto = require('./getProto')
 const md5 = require('md5')
-const { Tomb, Temple, Shrines, Hanamura, Hollow, Holdout, Battlefield, Garden, Doom, Shire, Bay, Mines, Warhead, Cavern, City, Outpost, Industrial, Checkpoint, Foundry } = require('./mapParsers')
+const { Alterac, Tomb, Temple, Shrines, Hanamura, Hollow, Holdout, Battlefield, Garden, Doom, Shire, Bay, Mines, Warhead, Cavern, City, Outpost, Industrial, Checkpoint, Foundry } = require('./mapParsers')
 
 const loopsToS = function(time) {
   return parseInt((time-608)/16)
@@ -12,7 +12,7 @@ const loopsToS = function(time) {
 const HS = (hash,index) => hash.slice(index*2,(index+1)*2)
 const md5HashConverter = (h) => `${HS(h,3)}${HS(h,2)}${HS(h,1)}${HS(h,0)}-${HS(h,5)}${HS(h,4)}-${HS(h,7)}${HS(h,6)}-${HS(h,8)}${HS(h,9)}-${HS(h,10)}${HS(h,11)}${HS(h,12)}${HS(h,13)}${HS(h,14)}${HS(h,15)}`
 
-const nickMaps = {'BraxisOutpost': 15, 'ControlPoints': 1, 'Shrines': 2, 'Crypts': 0, 'BattlefieldOfEternity': 5, 'Warhead Junction': 6, 'BlackheartsBay': 10, 'CursedHollow': 3, 'LostCavern': 11, 'HanamuraPayloadPush': 16, 'TowersOfDoom': 8, 'HauntedWoods': 7, 'Hanamura': 14, 'BraxisHoldout': 4, 'DragonShire': 9, 'HauntedMines': 12, 'SilverCity': 13, 'Volskaya': 17, 'IndustrialDistrict':18}
+const nickMaps = {'AlteracPass': 19, 'BraxisOutpost': 15, 'ControlPoints': 1, 'Shrines': 2, 'Crypts': 0, 'BattlefieldOfEternity': 5, 'Warhead Junction': 6, 'BlackheartsBay': 10, 'CursedHollow': 3, 'LostCavern': 11, 'HanamuraPayloadPush': 16, 'TowersOfDoom': 8, 'HauntedWoods': 7, 'Hanamura': 14, 'BraxisHoldout': 4, 'DragonShire': 9, 'HauntedMines': 12, 'SilverCity': 13, 'Volskaya': 17, 'IndustrialDistrict':18}
 const protoProto = require('./protos/61952.json')
 
 let getTalentN = function(talentName,heroN,talentN,HOTS) {
@@ -68,7 +68,7 @@ function parseFile(file, HOTS) {
       thisReplay.apiHash = apiHash
       gameMode = HOTS.modesN[gameMode]
       let region = details['m_playerList'][0]['m_toon']['m_region']
-      if (region===98) return resolve(98)
+      if (region===98 || region===0) return resolve(98)
 
       if (HOTS.mapDic.hasOwnProperty(mapName)) mapName = HOTS.mapDic[mapName]
       else if (HOTS.mapDic.hasOwnProperty(mapName.toLowerCase())) mapName = HOTS.mapDic[mapName.toLowerCase()]
@@ -502,6 +502,7 @@ function parseFile(file, HOTS) {
         case 16: Checkpoint(scoreResults,uniqueDic,mapStats,mapObjectives);break
         case 17: Foundry(scoreResults,uniqueDic,mapStats,mapObjectives, mechCaptures);break
         case 18: Industrial(scoreResults,uniqueDic,mapStats,mapObjectives);break
+        case 19: Alterac(scoreResults,uniqueDic,mapStats,mapObjectives);break
         default: break
       }
 

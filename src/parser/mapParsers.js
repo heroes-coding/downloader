@@ -296,6 +296,7 @@ function City() {}
 function Outpost() {}
 function Industrial() {}
 function Checkpoint() {}
+function Alterac() {}
 function Foundry(mechCaptures, mapObjectives) { mapObjectives[26] = mechCaptures }
 
-module.exports = { Tomb, Temple, Shrines, Hanamura, Hollow, Holdout, Battlefield, Garden, Doom, Shire, Bay, Mines, Warhead, Cavern, City, Outpost, Industrial, Checkpoint, Foundry }
+module.exports = { Alterac, Tomb, Temple, Shrines, Hanamura, Hollow, Holdout, Battlefield, Garden, Doom, Shire, Bay, Mines, Warhead, Cavern, City, Outpost, Industrial, Checkpoint, Foundry }
