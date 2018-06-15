@@ -181,5 +181,5 @@ app.put('/getProto', async function(req, res) {
   return res.send(protoCompressed)
 })
 
-const port = isWindows ? 3210 : 3210
+const port = isWindows ? 3210 : 3000
 app.listen(port, () => console.log(`Auth server listening on port ${port}`))
