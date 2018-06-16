@@ -34,7 +34,8 @@ const addUpdates = (zipPath) => {
     const entry = zipEntries[e]
     const key = entry.entryName
     const data = zip.getEntry(entry).getData()
-    fullStats[key] = Buffer.concat([fullStats[key],data])
+    if (fullStats[key]) fullStats[key] = Buffer.concat([fullStats[key],data])
+    else fullStats[key] = data
   }
   zip = null
 }
