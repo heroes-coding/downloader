@@ -27,6 +27,8 @@ const getFile = async(fileData) => {
   return promise
 }
 
+// aws s3 cp s3://hotsapi/2fcbd06f-61c5-0d0d-66e2-321c805e694a.StormReplay test.StormReplay --request-payer=requester
+
 module.exports = {
   getFile
 }

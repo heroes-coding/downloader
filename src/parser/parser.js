@@ -5,6 +5,7 @@ const MPQArchive = require('empeeku/mpyq').MPQArchive
 const getProto = require('./getProto')
 const md5 = require('md5')
 const { Alterac, Tomb, Temple, Shrines, Hanamura, Hollow, Holdout, Battlefield, Garden, Doom, Shire, Bay, Mines, Warhead, Cavern, City, Outpost, Industrial, Checkpoint, Foundry } = require('./mapParsers')
+const mmrLetters = {1:'q',3:'h',4:'t',2:'u',5:'q'}
 
 const loopsToS = function(time) {
   return parseInt((time-608)/16)
@@ -68,7 +69,7 @@ function parseFile(file, HOTS) {
       thisReplay.apiHash = apiHash
       gameMode = HOTS.modesN[gameMode]
       let region = details['m_playerList'][0]['m_toon']['m_region']
-      if (region===98 || region===0) return resolve(98)
+      if (region===98 || region===0 || !mmrLetters.hasOwnProperty(gameMode)) return resolve(98)
 
       if (HOTS.mapDic.hasOwnProperty(mapName)) mapName = HOTS.mapDic[mapName]
       else if (HOTS.mapDic.hasOwnProperty(mapName.toLowerCase())) mapName = HOTS.mapDic[mapName.toLowerCase()]
