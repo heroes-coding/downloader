@@ -515,32 +515,14 @@ function parseFile(file, HOTS) {
       thisReplay['h'] = {}
       for (let p=0;p<10;p++) thisReplay['h'][p] = [heroes[p],p,Math.floor(p/5)===winners,heroNames[p],battleTags[p],awards[p],full[p].Deaths, full[p].TownKills,full[p].Takedowns, full[p].SoloKill,full[p].Assists,full[p].HighestKillStreak, full[p].Level, full[p].ExperienceContribution, full[p].HeroDamage, full[p].DamageTaken, full[p].StructureDamage, full[p].SiegeDamage, full[p].Healing, full[p].SelfHealing, full[p].TimeSpentDead, full[p].TimeCCdEnemyHeroes, full[p].CreepDamage, full[p].SummonDamage, full[p].MercCampCaptures, full[p].WatchTowerCaptures, full[p].MinionDamage, full[p].nGlobes, full[p].silenced, full[p].TierIDs[0], full[p].TierTalents[0], full[p].TierIDs[1], full[p].TierTalents[1], full[p].TierIDs[2], full[p].TierTalents[2], full[p].TierIDs[3], full[p].TierTalents[3], full[p].TierIDs[4], full[p].TierTalents[4], full[p].TierIDs[5], full[p].TierTalents[5], full[p].TierIDs[6], full[p].TierTalents[6], full[p].TeamfightDamageTaken, full[p].TeamfightEscapesPerformed, full[p].TimeSilencingEnemyHeroes, full[p].ClutchHealsPerformed, full[p].OutnumberedDeaths, full[p].EscapesPerformed, full[p].TimeStunningEnemyHeroes, full[p].VengeancesPerformed, full[p].TeamfightHeroDamage, full[p].TimeRootingEnemyHeroes, full[p].ProtectionGivenToAllies, full[p].TeamTakedowns, full[p].nPings, full[p].nChat,full[p].voteN, full[p].votee, full[p].TimeOnFire,heroMapStats[p]]
 
-      let bans = [['null','null'],['null','null']]
+      let bans = [['null','null'],['null','null'],['null','null']]
       if ([2,3,4].includes(gameMode)) {
         if (!atts) atts = Protocol.decodeReplayAttributesEvents(archive.readFile('replay.attributes.events'))
-        let ban00 = atts.scopes[16][4023][0]['value'].toString()
-        if (HOTS.nickDic.hasOwnProperty(ban00)) bans[0][0] = HOTS.nickDic[ban00]
-        else if (ban00) {
-          console.log(ban00)
-          return resolve(1)
-        }
-        let ban01 = atts.scopes[16][4025][0]['value'].toString()
-        if (HOTS.nickDic.hasOwnProperty(ban01)) bans[0][1] = HOTS.nickDic[ban01]
-        else if (ban01) {
-          console.log(ban01)
-          return resolve(1)
-        }
-        let ban10 = atts.scopes[16][4028][0]['value'].toString()
-        if (HOTS.nickDic.hasOwnProperty(ban10)) bans[1][0] = HOTS.nickDic[ban10]
-        else if (ban10) {
-          console.log(ban10)
-          return resolve(1)
-        }
-        let ban11 = atts.scopes[16][4030][0]['value'].toString()
-        if (HOTS.nickDic.hasOwnProperty(ban11)) bans[1][1] = HOTS.nickDic[ban11]
-        else if (ban11) {
-          console.log(ban11)
-          return resolve(1)
+        const banIndexes = [4023,4025,4043, 4028,4030,4045]
+        for (let i=0;i<6;i++) {
+          if (i%3 === 2 && build < 66488) continue
+          const ok = addBanAndIsOK(atts,banIndexes[i],HOTS, bans, Math.floor(i/3), i%3)
+          if (!ok) return resolve(1)
         }
       }
       thisReplay['b'] = bans
@@ -580,6 +562,17 @@ function parseFile(file, HOTS) {
     } // continue code
   })
   return promise
+}
+
+const addBanAndIsOK = (atts, value,HOTS, bans, team, slot) => {
+  console.log({atts, value, bans, team, slot})
+  let ban = atts.scopes[16][value][0]['value'].toString()
+  if (HOTS.nickDic.hasOwnProperty(ban)) bans[team][slot] = HOTS.nickDic[ban]
+  else if (ban) {
+    console.log(ban)
+    return false
+  }
+  return true
 }
 
 module.exports = { parseFile }
