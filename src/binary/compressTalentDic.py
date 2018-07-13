@@ -81,6 +81,7 @@ for build in builds:
                     if tal is None or i < nTals:
                         continue
                     if not tal in tals.values():
+                        print ("Missing tal: {} for hero: {} on build: {}, lev: {}, slot: {}".format(tal, hero, build, lev,i))
                         if not buildN in talentBuilder[hero][8]:
                             talentBuilder[hero][8][buildN] = [[lev,i]]
                         else:
