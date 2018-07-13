@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
+"""
+Created on Fri Jul 13 16:54:05 2018
+
+@author: Jeremy
+"""
+
+# -*- coding: utf-8 -*-
 import os, json
-with open('/stats/talentDic.json','r') as TD:
+basePath = 'F:/apiFiles/stats' if os.path.exists("C:/") else '/stats'
+with open(os.path.join(basePath,'talentDic.json'),'r') as TD:
     talentDic = json.load(TD)
 
-with open('/stats/HOTS.json', 'r') as HS:
+with open(os.path.join(basePath,'HOTS.json'), 'r') as HS:
     HOTS = json.load(HS)
 
 
@@ -29,16 +37,20 @@ for build, bDic in talentDic.items():
 
 
 
-if os.path.exists("/stats/talentDicBU.json"):
-    os.remove("/stats/talentDicBU.json")
-os.rename('/stats/talentDic.json',"/stats/talentDicBU.json")
-with open('/stats/talentDic.json','w') as TD:
+if os.path.exists(os.path.join(basePath,"talentDicBU.json")):
+    os.remove(os.path.join(basePath,"talentDicBU.json"))
+os.rename(os.path.join(basePath,'talentDic.json'),os.path.join(basePath,"talentDicBU.json"))
+with open(os.path.join(basePath,'talentDic.json'),'w') as TD:
     json.dump(talentDic,TD)
 
 
 talentBuilder = {"builds": talentDic["builds"]}
 talentDic = {int(build) if not build == 'builds' else 'builds': data for build, data in talentDic.items()}
 builds = sorted(list([k for k in talentDic.keys() if not k == 'builds']))
+
+previous = {}
+
+previousBuild = None
 for build in builds:
     bDic = talentDic[build]
     buildN = talentDic['builds'][str(build)]
@@ -48,8 +60,11 @@ for build in builds:
         except:
             print("WTF?",hero)
             continue
+        previous = None
         if not hero in talentBuilder:
-            talentBuilder[hero] = [buildN, {}, {}, {}, {}, {}, {}, {} ]
+            talentBuilder[hero] = [buildN, {}, {}, {}, {}, {}, {}, {}, {} ]
+        else:
+            previous = previousBuild
         for lev, tals in enumerate(levs):
             for bracket, tal in tals.items():
                 if tal is None or bracket == 'null':
@@ -60,10 +75,27 @@ for build in builds:
                 else:
                     if tal != talentBuilder[hero][lev+1][bracket][-1][1]:
                         talentBuilder[hero][lev+1][bracket].append([buildN,tal])
+            nTals = len(tals)
+            if previous and str(hero) in previous:
+                for i,tal in enumerate(previous[str(hero)][lev].values()):
+                    if tal is None or i < nTals:
+                        continue
+                    if not tal in tals.values():
+                        if not buildN in talentBuilder[hero][8]:
+                            talentBuilder[hero][8][buildN] = [[lev,i]]
+                        else:
+                            talentBuilder[hero][8][buildN].append([lev,i])
+    previousBuild = bDic
 
 
-if os.path.exists("/stats/talentBuilderBU.json"):
-    os.remove("/stats/talentBuilderBU.json")
-os.rename('/stats/talentBuilder.json',"/stats/talentBuilderBU.json")
-with open('/stats/talentBuilder.json','w') as TD:
+
+if os.path.exists(os.path.join(basePath,"talentBuilderBU.json")):
+    os.remove(os.path.join(basePath,"talentBuilderBU.json"))
+
+
+if os.path.exists(os.path.join(basePath,'talentBuilder.json')):
+    os.rename(os.path.join(basePath,'talentBuilder.json'),os.path.join(basePath,"talentBuilderBU.json"))
+
+
+with open(os.path.join(basePath,'talentBuilder.json'),'w') as TD:
     json.dump(talentBuilder,TD)

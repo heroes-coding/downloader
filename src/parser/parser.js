@@ -567,9 +567,7 @@ function parseFile(file, HOTS) {
 const addBanAndIsOK = (atts, value,HOTS, bans, team, slot) => {
   let ban = atts.scopes[16][value][0]['value'].toString()
   if (HOTS.nickDic.hasOwnProperty(ban)) bans[team][slot] = HOTS.nickDic[ban]
-  else if (ban) {
-    return false
-  }
+  else if (ban) return false
   return true
 }
 
