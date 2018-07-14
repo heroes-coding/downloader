@@ -36,6 +36,7 @@ for build, bDic in talentDic.items():
                         print("MISSING TALENT FOR:",hero,tal, talentDic[build][hero][lev][bracket])
 
 
+
 """
 with open(os.path.join(basePath,'talentBuilder.json'),'r') as TD:
     tb = json.load(TD)
@@ -55,6 +56,7 @@ builds = sorted(list([k for k in talentDic.keys() if not k == 'builds']))
 
 
 curBuildCounts = {}
+curBuildStrikes = {}
 for build in builds:
     bDic = talentDic[build]
     buildN = talentDic['builds'][str(build)]
@@ -64,10 +66,10 @@ for build in builds:
         except:
             print("WTF?",hero)
             continue
-        previous = None
         if not hero in talentBuilder:
             talentBuilder[hero] = [buildN, {}, {}, {}, {}, {}, {}, {}, {} ]
             curBuildCounts[hero] = [0,0,0,0,0,0,0]
+            curBuildStrikes[hero] = [0,0,0,0,0,0,0]
         for lev, tals in enumerate(levs):
             for bracket, tal in tals.items():
                 if tal is None or bracket == 'null':
@@ -80,12 +82,20 @@ for build in builds:
                         talentBuilder[hero][lev+1][bracket].append([buildN,tal])
             nTals = len(tals)-1
             if curBuildCounts[hero][lev] > nTals:
-                if not buildN in talentBuilder[hero][8]:
-                    talentBuilder[hero][8][buildN] = [[lev,curBuildCounts[hero][lev]]]
+                if curBuildStrikes[hero][lev] > 0:
+                    if not buildN in talentBuilder[hero][8]:
+                        talentBuilder[hero][8][buildN] = [[lev,curBuildCounts[hero][lev]]]
+                    else:
+                        talentBuilder[hero][8][buildN].append([lev,curBuildCounts[hero][lev]])
+                    print (" hero: {} on build: {} level: {} too long, nTals: {}, previous Build Tals: {}".format(hero, build,lev, nTals,curBuildCounts[hero][lev] ))
+                    curBuildStrikes[hero][lev] = 0
                 else:
-                    talentBuilder[hero][8][buildN].append([lev,curBuildCounts[hero][lev]])
-                print (" hero: {} on build: {} level: {} too long, nTals: {}, previous Build Tals: {}".format(hero, build,lev, nTals,curBuildCounts[hero][lev] ))
+                    curBuildStrikes[hero][lev] += 1
+            else:
+                if curBuildStrikes[hero][lev] > 0:
+                    curBuildStrikes[hero][lev] -= 1
             curBuildCounts[hero][lev] = nTals
+
 
 if os.path.exists(os.path.join(basePath,"talentBuilderBU.json")):
     os.remove(os.path.join(basePath,"talentBuilderBU.json"))
