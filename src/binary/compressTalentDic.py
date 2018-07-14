@@ -78,13 +78,13 @@ for build in builds:
                 else:
                     if tal != talentBuilder[hero][lev+1][bracket][-1][1]:
                         talentBuilder[hero][lev+1][bracket].append([buildN,tal])
-            nTals = len(tals)
+            nTals = len(tals)-1
             if curBuildCounts[hero][lev] > nTals:
                 if not buildN in talentBuilder[hero][8]:
-                    talentBuilder[hero][8][buildN] = [[lev,curBuildCounts[hero][lev]-1]]
+                    talentBuilder[hero][8][buildN] = [[lev,curBuildCounts[hero][lev]]]
                 else:
-                    talentBuilder[hero][8][buildN].append([lev,curBuildCounts[hero][lev]-1])
-                print (" hero: {} on build: {} too long".format(hero, build))
+                    talentBuilder[hero][8][buildN].append([lev,curBuildCounts[hero][lev]])
+                print (" hero: {} on build: {} level: {} too long, nTals: {}, previous Build Tals: {}".format(hero, build,lev, nTals,curBuildCounts[hero][lev] ))
             curBuildCounts[hero][lev] = nTals
 
 if os.path.exists(os.path.join(basePath,"talentBuilderBU.json")):
