@@ -1,0 +1,6 @@
+#  NEED TO MOVE THIS TO SOME KIND OF AUTOMATED DEPLOYMENT (WHICH IS HARD BECAUSE OF THE DISK THAT IT USES, THE ROOT ONE FOR FREE), BUT FOR NOW, HERE IS HOW TO RE-SET UP THE BACKEND:
+
+cd /local/api
+pm2 start src/auth/authServer.js
+pm2 start src/mmr/mmrSingle.py --interpreter=python3
+pm2 start src/index.js

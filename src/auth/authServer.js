@@ -52,7 +52,6 @@ app.enable('trust proxy')
 app.post('/full', async function(req, res) {
   const start = performance.now()
   let { day: days, mode: modes, offset: offsets, vip, id, pw } = req.body
-  console.log({days,modes,offsets,vip,id,pw})
   let error = false
   let nFiles = 0
   try {
@@ -71,7 +70,6 @@ app.post('/full', async function(req, res) {
     error = true
   }
   const minDay = vip ? -365 : dateToDSL(new Date()) - 8
-  console.log({id,vip, minDay})
   if (!nFiles || nFiles !== modes.length || nFiles !== offsets.length) error = true
   if (error) {
     res.status(400)
@@ -156,7 +154,6 @@ app.get('/protected/:idpw', async(req, res) => {
     if (!result.rowCount) throw new Error(`Couldn't find User: ${id} & Password: ${pw}`) // note the user could exist but password is wrong, from another browser for instance.  Keeping error case to one to keep this simple
     // I'm leaving all of the token stuff the same to perhaps insert the refresh token logic here (which is currently buggy)
     const { access_token, refresh_token, credential_expiration: expirationTime } = result.rows[0]
-    console.log({ access_token, refresh_token, expirationTime })
     const apiClient = patreon(access_token)
     const { rawJson } = await apiClient(`/current_user`)
     const token = { access_token, refresh_token, expirationTime }

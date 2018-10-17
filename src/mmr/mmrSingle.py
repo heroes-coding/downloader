@@ -119,7 +119,7 @@ while True:
         socket.send_string(json.dumps(results))
     except BaseException as error:
         if not str(error) == 'Resource temporarily unavailable':
-            socket.send_string(json.dumps({"error":str(error),"id":req['id'], "req":req}))
+            socket.send_string(json.dumps({"error":str(error)}))
         continue
 
 

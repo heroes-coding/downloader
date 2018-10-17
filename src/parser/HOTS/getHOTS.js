@@ -10,6 +10,7 @@ function getHOTS(forceRefresh) {
     for (let n=0;n<nickKeys.length;n++) {
       HOTS.nickDic[HOTS.nickNames[nickKeys[n]]] = parseInt(nickKeys[n])
     }
+    console.log(HOTS.nickDic)
     HOTS.heroDic['布雷泽'] = 75
     HOTS.talentN = {
       // why are the devs messing around with already established talent names?
@@ -39,5 +40,6 @@ function getHOTS(forceRefresh) {
   })
   return promise
 }
+
 
 module.exports = getHOTS
