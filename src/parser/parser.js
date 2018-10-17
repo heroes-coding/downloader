@@ -312,16 +312,17 @@ function parseFile(file, HOTS) {
       }
       if (build>=43571) {
         for (let p=0;p<10;p++) {
-          if (isNaN(heroes[p])) {
+          // if (isNaN(heroes[p])) {
             let nickHero = uniqueDic['EndOfGameTalentChoices'][p]['m_stringData'][0]['m_value'].toString()
             if (HOTS.nickDic.hasOwnProperty(nickHero)) {
-              console.log(`heroDic missing {$heroes[p]}, but able to add it anyway (${HOTS.nickDic[nickHero]})`)
-              heroes[p] = HOTS.nickDic[nickHero]
+              const h = HOTS.nickDic[nickHero]
+              if (h === 82) console.log({nickHero, hero: heroes[p]})
+              heroes[p] = h;
             } else {
               console.log("Missing a hero: ",heroes[p], ", and their nickname: ", nickHero, ", and the slug: ",atts.scopes[p+1][4002][0]['value'].toString())
               console.log("Region is", region)
             }
-          }
+          // }
         }
       }
 
