@@ -312,7 +312,7 @@ function parseFile(file, HOTS) {
       }
       if (build>=43571) {
         for (let p=0;p<10;p++) {
-          // if (isNaN(heroes[p])) {
+          if (isNaN(heroes[p]) || heroes[p] === 82) {
             let nickHero = uniqueDic['EndOfGameTalentChoices'][p]['m_stringData'][0]['m_value'].toString()
             if (HOTS.nickDic.hasOwnProperty(nickHero)) {
               const h = HOTS.nickDic[nickHero]
@@ -322,7 +322,7 @@ function parseFile(file, HOTS) {
               console.log("Missing a hero: ",heroes[p], ", and their nickname: ", nickHero, ", and the slug: ",atts.scopes[p+1][4002][0]['value'].toString())
               console.log("Region is", region)
             }
-          // }
+          }
         }
       }
 
