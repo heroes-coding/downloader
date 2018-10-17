@@ -30,7 +30,7 @@ function parseFile(file, HOTS) {
       let header = Protocol.decodeReplayHeader(archive.header.userDataHeader.content,proto.typeInfos,proto.hID)
       let build = header['m_version']['m_build']
       let details = Protocol.decodeReplayDetails(archive.readFile('replay.details'),proto.typeInfos,proto.dID)
-      
+
       let UTCTime = details['m_timeUTC'] === 0 ? details['m_timeLocalOffset'] : details['m_timeUTC']
       let minSinceLaunch = parseInt((UTCTime - 130776768000000000)/600000000)
       let mapName = details['m_title'].toString()
@@ -77,7 +77,7 @@ function parseFile(file, HOTS) {
         let hero = details['m_playerList'][i]['m_hero'].toString()
         if (HOTS.heroDic.hasOwnProperty(hero)) heroes.push(HOTS.heroDic[hero])
         else heroes.push(hero)
-        if (HOTS.heroDic[hero] === 82 || isNaN(hero)) console.log({hero})
+        if (HOTS.heroDic[hero] === 82) console.log({'hero 82':hero})
         heroNames.push(details['m_playerList'][i]['m_name'].toString())
       }
 
