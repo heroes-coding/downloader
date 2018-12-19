@@ -10,7 +10,6 @@ const getFile = async(fileData) => {
   let promise = new Promise(async(resolve, reject) => {
     const { filename, id } = fileData
     const Key = `${filename}.StormReplay`
-    console.log({Key})
     const params = {Bucket: 'hotsapi', Key, RequestPayer: 'requester'}
     let mem = new MemoryStream()
     let data = []
@@ -29,7 +28,11 @@ const getFile = async(fileData) => {
   return promise
 }
 
-// aws s3 cp s3://hotsapi/2fcbd06f-61c5-0d0d-66e2-321c805e694a.StormReplay test.StormReplay --request-payer=requester
+// /usr/local/bin/aws s3 cp s3://hotsapi/e76865e9-8fd8-8b9d-51f1-2488e2079bd1.StormReplay test.StormReplay --request-payer=requester
+
+// /usr/local/bin/aws s3 cp http://hotsapi.s3-website-eu-west-1.amazonaws.com/7548c3e4-347b-af84-5b29-042611eab3b6.StormReplay test.StormReplay --request-payer=requester
+
+// http:\/\/hotsapi.s3-website-eu-west-1.amazonaws.com\/7548c3e4-347b-af84-5b29-042611eab3b6.StormReplay
 
 module.exports = {
   getFile
