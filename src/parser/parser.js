@@ -306,7 +306,6 @@ function parseFile (file, HOTS) {
         }
         if (nickMaps.hasOwnProperty(nickMap)) {
           mapName = nickMaps[nickMap]
-          console.log('Found the map: ', mapName)
         }
       }
       if (build >= 43571) {
