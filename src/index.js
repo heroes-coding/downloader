@@ -52,36 +52,36 @@ const downloadAndAppendToArchive = async(fileInfo) => {
       const messages = archive.readFile('replay.message.events')
       const lobby = archive.readFile('replay.server.battlelobby')
       const trackers = archive.readFile('replay.tracker.events')
-      arch.append(zlib.gzipSync(header, {level: 1}),{ name: `header-${filename}` })
-      arch.append(zlib.gzipSync(details, {level: 1}),{ name: `details-${filename}` })
-      arch.append(zlib.gzipSync(atts, {level: 1}),{ name: `atts-${filename}` })
-      arch.append(zlib.gzipSync(init, {level: 1}),{ name: `init-${filename}` })
-      arch.append(zlib.gzipSync(messages, {level: 1}),{ name: `messages-${filename}` })
-      arch.append(zlib.gzipSync(lobby, {level: 1}),{ name: `lobby-${filename}` })
-      arch.append(zlib.gzipSync(trackers, {level: 1}),{ name: `trackers-${filename}` })
+      arch.append(zlib.gzipSync(header, {level: 1}), { name: `header-${filename}` })
+      arch.append(zlib.gzipSync(details, {level: 1}), { name: `details-${filename}` })
+      arch.append(zlib.gzipSync(atts, {level: 1}), { name: `atts-${filename}` })
+      arch.append(zlib.gzipSync(init, {level: 1}), { name: `init-${filename}` })
+      arch.append(zlib.gzipSync(messages, {level: 1}), { name: `messages-${filename}` })
+      arch.append(zlib.gzipSync(lobby, {level: 1}), { name: `lobby-${filename}` })
+      arch.append(zlib.gzipSync(trackers, {level: 1}), { name: `trackers-${filename}` })
     }
-    downloadResults.push([id,filename,true])
+    downloadResults.push([id, filename, true])
   } catch (e) {
-    console.log(e)
-    downloadResults.push([id,filename,false])
+    console.log(e.message)
+    downloadResults.push([id, filename, false])
   } finally { openDownloads-- }
 }
 
 const downloadReplays = async(results) => {
   let promise = new Promise(async(resolve, reject) => {
     const nResults = results.length
-    const lastID = results[nResults-1].id
+    const lastID = results[nResults - 1].id
     let toDownload = []
     const timings = {}
     const startTime = process.hrtime()
-    for (let i=0;i<results.length;i++) {
+    for (let i = 0; i < results.length; i++) {
       let file = results[i]
       const { id, filename } = file
       let result
       try {
         result = await downloadsDB.simpleQuery(`SELECT * FROM downloads WHERE id = ${id}`)
       } catch (e) {
-        console.log(e)
+        console.log(e.message)
       }
       if (result.rowCount && result.rows[0].downloaded) continue
       else toDownload.push({ id, filename })
@@ -95,21 +95,21 @@ const downloadReplays = async(results) => {
     downloadResults = []
     replays = {}
     openDownloads = 0
-    for (let f=0;f<nDowns;f++) {
+    for (let f = 0; f < nDowns; f++) {
       while (openDownloads > 5) await asleep(50)
       openDownloads++
-      downloadAndAppendToArchive(toDownload[f],f)
+      downloadAndAppendToArchive(toDownload[f], f)
     }
     while (openDownloads > 0) await asleep(50)
     // add mmrs
     replays = await addMMRs(replays)
     const repKeys = Object.keys(replays)
-    for (let r=0;r<repKeys.length;r++) {
+    for (let r = 0; r < repKeys.length; r++) {
       const repKey = repKeys[r]
-      arch.append(zlib.gzipSync(JSON.stringify(replays[repKey]), {level: 1}),{ name: repKey })
+      arch.append(zlib.gzipSync(JSON.stringify(replays[repKey]), {level: 1}), { name: repKey })
     }
-    addTiming(timings,startTime,`${nDowns} took`)
-    let saveName = `/tempDownloads/${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`
+    addTiming(timings, startTime, `${nDowns} took`)
+    let saveName = `/tempDownloads/${toDownload[0].id}-${toDownload[nDowns - 1].id}.zip`
     console.log('done downloading', timings, saveName, {repKeys: repKeys.length})
     extractCompressedData(replays, HOTS)
     await asleep(5000)
@@ -117,7 +117,7 @@ const downloadReplays = async(results) => {
     arch.finalize()
     arch.pipe(output)
     setTimeout(() => { transferReplays(saveName).then(() => { fs.unlinkSync(saveName) }) }, 3000)
-    let playerDataZipPath = path.join(STATS_PATH, `${toDownload[0].id}-${toDownload[nDowns-1].id}.zip`)
+    let playerDataZipPath = path.join(STATS_PATH, `${toDownload[0].id}-${toDownload[nDowns - 1].id}.zip`)
     await saveOpenFiles(playerDataZipPath, stopIndex, savePlayerData)
     if (savePlayerData) setTimeout(() => { transferPlayerData(playerDataZipPath).then(() => { fs.unlinkSync(playerDataZipPath) }) }, 3000)
     if (testRun) {
@@ -166,13 +166,13 @@ const start = async(startIndex) => {
         await asleep(restTime)
         continue
       } else {
-        console.log({e, message:e.message})
+        console.log({e, message: e.message})
         console.log(`${UNKNOWN_ERROR}, sleeping for ${sleepTime}ms`)
         await asleep(sleepTime)
         continue
       }
     }
-    results = results.slice(0,25) // need to cut down on memory usage significantly.  This should do the trick (250 MB to 75?)
+    results = results.slice(0, 25) // need to cut down on memory usage significantly.  This should do the trick (250 MB to 75?)
     // extra checks for empty result or strange result
     try {
       startIndex = await downloadReplays(results)
@@ -181,7 +181,7 @@ const start = async(startIndex) => {
         process.exit(0)
       }
     } catch (e) {
-      console.log(e)
+      console.log(e.message)
     }
     arch = null // make sure this thing is released from memory first
   } // end of forever loop
