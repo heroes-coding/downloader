@@ -47,7 +47,7 @@ function parseFile (file, HOTS) {
       let atts = Protocol.decodeReplayAttributesEvents(archive.readFile('replay.attributes.events'))
       let initData
 
-      let apiHash, gameMode
+      let apiHash, gameMode, modeNumber
       if (build >= 43905) {
         try { // For some builds initData doesn't work in javascript.  This is a problem.
           initData = Protocol.decodeReplayInitdata(archive.readFile('replay.initData'), proto.typeInfos, proto.iID)
@@ -61,8 +61,10 @@ function parseFile (file, HOTS) {
         }
       } else {
         try {
-          gameMode = HOTS.modesDic[atts.scopes[16][4010][0].value.toString()]
+          modeNumber = atts.scopes[16][4010][0].value.toString()
+          gameMode = HOTS.modesDic[modeNumber]
         } catch (err) {
+          console.log(`Missing game mode: ${modeNumber}`)
           gameMode = 'Quick Match'
         }
       }
@@ -312,11 +314,13 @@ function parseFile (file, HOTS) {
         for (let p = 0; p < 10; p++) {
           if (isNaN(heroes[p])) {
             let nickHero = uniqueDic['EndOfGameTalentChoices'][p]['m_stringData'][0]['m_value'].toString()
+            const slug = atts.scopes[p + 1][4002][0]['value'].toString()
             if (HOTS.nickDic.hasOwnProperty(nickHero)) {
-              const h = HOTS.nickDic[nickHero]
-              heroes[p] = h
+              heroes[p] = HOTS.nickDic[nickHero]
+            } else if (HOTS.nickDic.hasOwnProperty(slug)) {
+              heroes[p] = HOTS.nickDic[slug]
             } else {
-              console.log('Missing a hero: ', heroes[p], ', and their nickname: ', nickHero, ', and the slug: ', atts.scopes[p + 1][4002][0]['value'].toString())
+              console.log('Missing a hero: ', heroes[p], ', and their nickname: ', nickHero, ', and the slug: ', slug)
               console.log('Region is', region)
             }
           }
