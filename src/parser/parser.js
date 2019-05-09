@@ -560,6 +560,7 @@ function parseFile (file, HOTS) {
       }
       thisReplay['r'] = [minSinceLaunch, build, region, gameLength, mapName, gameMode, firstTo10, firstTo20, firstFort, winners]
       thisReplay.hash = hashCode
+      console.log(`Finishing parsing for replay of game mode ${gameMode}`)
       return resolve(thisReplay)
     } catch (err) {
       if (err.name !== 'CorruptedError') console.log(err)
@@ -572,7 +573,10 @@ function parseFile (file, HOTS) {
 const addBanAndIsOK = (atts, value, HOTS, bans, team, slot) => {
   let ban = atts.scopes[16][value][0]['value'].toString()
   if (HOTS.nickDic.hasOwnProperty(ban)) bans[team][slot] = HOTS.nickDic[ban]
-  else if (ban) return false
+  else if (ban) {
+    console.log(`Ban not okay! ${ban}`)
+    return false
+  } 
   return true
 }
 
