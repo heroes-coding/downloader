@@ -54,7 +54,9 @@ function parseFile (file, HOTS) {
           const randomValue = initData.m_syncLobbyState.m_gameDescription.m_randomValue
           apiHash = md5(`${bnetIDs.slice(0, 10).sort((x, y) => x > y).join('')}${randomValue}`)
           apiHash = md5HashConverter(apiHash)
-          gameMode = HOTS.modesDic[initData['m_syncLobbyState']['m_gameDescription']['m_gameOptions']['m_ammId']]
+          const modeId = initData['m_syncLobbyState']['m_gameDescription']['m_gameOptions']['m_ammId']
+          gameMode = HOTS.modesDic[modeId]
+          console.log({ modeId, gameMode })
         } catch (err) {
           console.log('Problem with initData for game of build ' + build)
           return resolve(0)
