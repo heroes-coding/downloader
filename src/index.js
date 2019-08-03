@@ -108,7 +108,7 @@ const downloadReplays = async (results) => new Promise(async (resolve, reject) =
 	replays = {}
 	openDownloads = 0
 	for (let f = 0; f < nDowns; f++) {
-		while (openDownloads > 5) await asleep(50)
+		// while (openDownloads > 5) await asleep(50)
 		openDownloads++
 		downloadAndAppendToArchive(toDownload[f], f)
 	}
