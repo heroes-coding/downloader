@@ -4,7 +4,8 @@ sqs.config.region = 'eu-west-1'
 
 var params = {
 	QueueUrl: 'https://sqs.eu-west-1.amazonaws.com/441215765077/replays', /* required */
-	MaxNumberOfMessages: 10
+	MaxNumberOfMessages: 10,
+	WaitTimeSeconds: 20
 }
 
 // const getSQSReplays = ()
