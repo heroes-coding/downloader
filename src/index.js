@@ -83,28 +83,31 @@ const getDownloaded = ({ id, filename }) => new Promise(async (resolve, reject) 
 	}
 })
 
-const filterForAlreadyDownloadedReplays = results => Promise.all(results.map(file => getDownloaded(file)))
+const filterForAlreadyDownloadedReplays = results => new Promise(async (resolve, reject) => {
+	try {
+		const nResults = results.length
+		let toDownload = await Promise.all(results.map(file => getDownloaded(file)))
+		toDownload = toDownload.filter(file => file)
+		const nDowns = toDownload.length
+		if (nDowns === 0) {
+			console.log(`Got ${nResults} results from hotsapi, but none to download...`)
+			return resolve(lastID)
+		} else {
+			console.log(`Got ${nResults} results from hotsapi, should be downloading ${nDowns} of them...`)
+		}
+		resolve({ nDowns, toDownload })
+	} catch (e) {
+		reject(e)
+	}
+
+})
 
 
 
 
 const downloadReplays = async (results) => new Promise(async (resolve, reject) => {
-	const nResults = results.length
 	const lastID = results[nResults - 1].id
-	let toDownload
-	try {
-		toDownload = await filterForAlreadyDownloadedReplays(results)
-	} catch (e) {
-		console.log(e)
-		process.exit(1)
-	}
-	toDownload = toDownload.filter(file => file)
-	const nDowns = toDownload.length
-	if (nDowns === 0) {
-		console.log(`Got ${nResults} results from hotsapi, but none to download...`)
-		return resolve(lastID)
-	} else console.log(`Got ${nResults} results from hotsapi, should be downloading ${nDowns} of them...`)
-
+	const { nDowns, toDownload } = await filterForAlreadyDownloadedReplays(results)
 	const timings = {}
 	const startTime = process.hrtime()
 	arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
@@ -112,7 +115,6 @@ const downloadReplays = async (results) => new Promise(async (resolve, reject) =
 	replays = {}
 	openDownloads = 0
 	for (let f = 0; f < nDowns; f++) {
-		while (openDownloads > 5) await asleep(50)
 		openDownloads++
 		downloadAndAppendToArchive(toDownload[f], f)
 	}
