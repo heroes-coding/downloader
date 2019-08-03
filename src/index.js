@@ -78,6 +78,7 @@ const getDownloaded = ({ id, filename }) => new Promise(async (resolve, reject) 
 			resolve(null)
 		} else {
 			console.log({ id, filename })
+
 			resolve({ id, filename })
 		}
 	} catch (e) {
