@@ -104,7 +104,7 @@ const downloadAndAppendToArchive = async (fileInfo) => {
 	}
 }
 
-const decorateReplays = (replays, saveName, repKeys, toDownload) => new Promise(async (resolve, reject) => {
+const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns) => new Promise(async (resolve, reject) => {
 	try {
 		replays = await addMMRs(replays)
 		const arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
@@ -167,7 +167,7 @@ const downloadReplays = async (results) => new Promise(async (resolve, reject) =
 	const repKeys = Object.keys(replays)
 	let saveName = `/tempDownloads/${toDownload[0].id}-${toDownload[nDowns - 1].id}.zip`
 	console.log('done downloading', timings, saveName, { repKeys: repKeys.length })
-	await decorateReplays(replays, saveName, repKeys, toDownload)
+	await decorateReplays(replays, saveName, repKeys, toDownload, nDowns)
 	return resolve(true)
 })
 
