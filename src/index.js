@@ -34,40 +34,6 @@ if (testRun) startIndex = undefined
 let downloadResults = []
 let replays = {}
 
-const downloadAndAppendToArchive = async (fileInfo) => {
-	const { filename, id } = fileInfo
-	try {
-		fileInfo = await getFile(fileInfo)
-		const { file } = fileInfo
-
-		if (parseFull) {
-			const replay = await parseFile(file, HOTS)
-			if (isNaN(replay)) replays[filename] = replay
-		} else {
-			const archive = new MPQArchive(file)
-			const header = archive.header.userDataHeader.content
-			const details = archive.readFile('replay.details')
-			const atts = archive.readFile('replay.attributes.events')
-			const init = archive.readFile('replay.initData')
-			const messages = archive.readFile('replay.message.events')
-			const lobby = archive.readFile('replay.server.battlelobby')
-			const trackers = archive.readFile('replay.tracker.events')
-			arch.append(zlib.gzipSync(header, { level: 1 }), { name: `header-${filename}` })
-			arch.append(zlib.gzipSync(details, { level: 1 }), { name: `details-${filename}` })
-			arch.append(zlib.gzipSync(atts, { level: 1 }), { name: `atts-${filename}` })
-			arch.append(zlib.gzipSync(init, { level: 1 }), { name: `init-${filename}` })
-			arch.append(zlib.gzipSync(messages, { level: 1 }), { name: `messages-${filename}` })
-			arch.append(zlib.gzipSync(lobby, { level: 1 }), { name: `lobby-${filename}` })
-			arch.append(zlib.gzipSync(trackers, { level: 1 }), { name: `trackers-${filename}` })
-		}
-		downloadResults.push([id, filename, true])
-	} catch (e) {
-		console.log(e.message)
-		downloadResults.push([id, filename, false])
-	} finally {
-		openDownloads--
-	}
-}
 
 
 const getDownloaded = ({ id, filename }) => new Promise(async (resolve, reject) => {
@@ -103,6 +69,86 @@ const filterForAlreadyDownloadedReplays = results => new Promise(async (resolve,
 
 
 
+const downloadAndAppendToArchive = async (fileInfo) => {
+	const { filename, id } = fileInfo
+	try {
+		fileInfo = await getFile(fileInfo)
+		const { file } = fileInfo
+
+		if (parseFull) {
+			const replay = await parseFile(file, HOTS)
+			if (isNaN(replay)) replays[filename] = replay
+		} else {
+			const archive = new MPQArchive(file)
+			const header = archive.header.userDataHeader.content
+			const details = archive.readFile('replay.details')
+			const atts = archive.readFile('replay.attributes.events')
+			const init = archive.readFile('replay.initData')
+			const messages = archive.readFile('replay.message.events')
+			const lobby = archive.readFile('replay.server.battlelobby')
+			const trackers = archive.readFile('replay.tracker.events')
+			arch.append(zlib.gzipSync(header, { level: 1 }), { name: `header-${filename}` })
+			arch.append(zlib.gzipSync(details, { level: 1 }), { name: `details-${filename}` })
+			arch.append(zlib.gzipSync(atts, { level: 1 }), { name: `atts-${filename}` })
+			arch.append(zlib.gzipSync(init, { level: 1 }), { name: `init-${filename}` })
+			arch.append(zlib.gzipSync(messages, { level: 1 }), { name: `messages-${filename}` })
+			arch.append(zlib.gzipSync(lobby, { level: 1 }), { name: `lobby-${filename}` })
+			arch.append(zlib.gzipSync(trackers, { level: 1 }), { name: `trackers-${filename}` })
+		}
+		downloadResults.push([id, filename, true])
+	} catch (e) {
+		console.log(e.message)
+		downloadResults.push([id, filename, false])
+	} finally {
+		openDownloads--
+	}
+}
+
+const decorateReplays = (replays, saveName, repKeys, toDownload) => new Promise(async (resolve, reject) => {
+	try {
+		replays = await addMMRs(replays)
+		const arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
+		for (let r = 0; r < repKeys.length; r++) {
+			const repKey = repKeys[r]
+			arch.append(zlib.gzipSync(JSON.stringify(replays[repKey]), { level: 1 }), { name: repKey })
+		}
+		extractCompressedData(replays, HOTS)
+		await asleep(5000)
+		const output = fs.createWriteStream(saveName)
+		arch.finalize()
+		arch.pipe(output)
+		setTimeout(() => {
+			transferReplays(saveName).then(() => {
+				fs.unlinkSync(saveName)
+			})
+		}, 3000)
+		let playerDataZipPath = path.join(STATS_PATH, `${toDownload[0].id}-${toDownload[nDowns - 1].id}.zip`)
+		await saveOpenFiles(playerDataZipPath, stopIndex, savePlayerData)
+		if (savePlayerData)
+			setTimeout(() => {
+				transferPlayerData(playerDataZipPath).then(() => {
+					fs.unlinkSync(playerDataZipPath)
+				})
+			}, 3000)
+		if (testRun) {
+			await asleep(3000)
+			process.exit(0)
+		} else {
+			if (!stopIndex) {
+				const query = format('INSERT INTO downloads (id,filename,downloaded) VALUES %L', downloadResults)
+				try {
+					await downloadsDB.simpleQuery(query)
+				} catch (e) {
+					return reject(e)
+				}
+			}
+		}
+		resolve(true)
+	} catch (e) {
+		console.log(e)
+		reject(e)
+	}
+})
 
 const downloadReplays = async (results) => new Promise(async (resolve, reject) => {
 	const { nDowns, toDownload } = await filterForAlreadyDownloadedReplays(results)
@@ -117,49 +163,11 @@ const downloadReplays = async (results) => new Promise(async (resolve, reject) =
 		downloadAndAppendToArchive(toDownload[f], f)
 	}
 	while (openDownloads > 0) await asleep(50)
-	// add mmrs
-	const repKeys = Object.keys(replays)
-	console.log(Object.keys(replays[repKeys[0]]))
-
-	replays = await addMMRs(replays)
-	for (let r = 0; r < repKeys.length; r++) {
-		const repKey = repKeys[r]
-		arch.append(zlib.gzipSync(JSON.stringify(replays[repKey]), { level: 1 }), { name: repKey })
-	}
 	addTiming(timings, startTime, `${nDowns} took`)
+	const repKeys = Object.keys(replays)
 	let saveName = `/tempDownloads/${toDownload[0].id}-${toDownload[nDowns - 1].id}.zip`
 	console.log('done downloading', timings, saveName, { repKeys: repKeys.length })
-	extractCompressedData(replays, HOTS)
-	await asleep(5000)
-	const output = fs.createWriteStream(saveName)
-	arch.finalize()
-	arch.pipe(output)
-	setTimeout(() => {
-		transferReplays(saveName).then(() => {
-			fs.unlinkSync(saveName)
-		})
-	}, 3000)
-	let playerDataZipPath = path.join(STATS_PATH, `${toDownload[0].id}-${toDownload[nDowns - 1].id}.zip`)
-	await saveOpenFiles(playerDataZipPath, stopIndex, savePlayerData)
-	if (savePlayerData)
-		setTimeout(() => {
-			transferPlayerData(playerDataZipPath).then(() => {
-				fs.unlinkSync(playerDataZipPath)
-			})
-		}, 3000)
-	if (testRun) {
-		await asleep(3000)
-		process.exit(0)
-	} else {
-		if (!stopIndex) {
-			const query = format('INSERT INTO downloads (id,filename,downloaded) VALUES %L', downloadResults)
-			try {
-				await downloadsDB.simpleQuery(query)
-			} catch (e) {
-				return reject(e)
-			}
-		}
-	}
+	await decorateReplays(replays, saveName, repKeys, toDownload)
 	return resolve(true)
 })
 
