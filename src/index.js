@@ -71,17 +71,21 @@ const downloadAndAppendToArchive = async (fileInfo) => {
 
 
 const getDownloaded = ({ id, filename }) => new Promise(async (resolve, reject) => {
-	const result = await downloadsDB.simpleQuery(`SELECT * FROM downloads WHERE id = ${id}`)
-	if (result.rowCount && result.rows[0].downloaded) {
-		resolve(null)
-	} else {
-		resolve({ id, filename })
+	try {
+		const result = await downloadsDB.simpleQuery(`SELECT * FROM downloads WHERE id = ${id}`)
+		if (result.rowCount && result.rows[0].downloaded) {
+			resolve(null)
+		} else {
+			resolve({ id, filename })
+		}
+	} catch (e) {
+		reject(e)
 	}
+
 })
 
 const filterForAlreadyDownloadedReplays = results => {
-	console.log(results)
-	return Promise.all(results.forEach(file => getDownloaded(file)))
+	return Promise.all(results.forEach(file => await getDownloaded(file)))
 }
 
 const downloadReplays = async (results) => new Promise(async (resolve, reject) => {
