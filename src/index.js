@@ -204,7 +204,7 @@ const start = async (startIndex) => {
 				continue
 			}
 		}
-		results = results.slice(0, 25) // need to cut down on memory usage significantly.  This should do the trick (250 MB to 75?)
+		// results = results.slice(0, 25) // need to cut down on memory usage significantly.  This should do the trick (250 MB to 75?)
 		// extra checks for empty result or strange result
 		try {
 			startIndex = await downloadReplays(results)
