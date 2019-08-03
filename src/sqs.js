@@ -11,7 +11,7 @@ var params = {
 
 sqs.receiveMessage(params, function (err, data) {
 	if (err) console.log(err, err.stack); // an error occurred
-	else console.log(len(data.Messages));           // successful respons
+	else console.log(data.Messages.length);           // successful respons
 })
 
 
