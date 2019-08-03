@@ -106,7 +106,6 @@ const filterForAlreadyDownloadedReplays = results => new Promise(async (resolve,
 
 
 const downloadReplays = async (results) => new Promise(async (resolve, reject) => {
-	const lastID = results[nResults - 1].id
 	const { nDowns, toDownload } = await filterForAlreadyDownloadedReplays(results)
 	const timings = {}
 	const startTime = process.hrtime()
@@ -160,7 +159,7 @@ const downloadReplays = async (results) => new Promise(async (resolve, reject) =
 			}
 		}
 	}
-	return resolve(lastID)
+	return resolve(true)
 })
 
 const getStartIndex = startIndex => new Promise(async (resolve, reject) => {
@@ -213,11 +212,12 @@ const start = async (startIndex) => {
 		results = results.slice(0, 25) // need to cut down on memory usage significantly.  This should do the trick (250 MB to 75?)
 		// extra checks for empty result or strange result
 		try {
-			startIndex = await downloadReplays(results) + 1
+			await downloadReplays(results) + 1
 			if (stopIndex && startIndex >= stopIndex) {
 				console.log('exiting because got to stop index')
 				process.exit(0)
 			}
+			startIndex = results[results.length - 1].id
 		} catch (e) {
 			console.log(e.message)
 		}
