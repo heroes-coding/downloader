@@ -119,7 +119,7 @@ const downloadReplays = async (results) => new Promise(async (resolve, reject) =
 	while (openDownloads > 0) await asleep(50)
 	// add mmrs
 	const repKeys = Object.keys(replays)
-	console.log(replays[repKeys[0]])
+	console.log(Object.keys(replays[repKeys[0]]))
 
 	replays = await addMMRs(replays)
 	for (let r = 0; r < repKeys.length; r++) {
