@@ -74,17 +74,16 @@ const getDownloaded = ({ id, filename }) => new Promise(async (resolve, reject) 
 	console.log(`Checking ${id}`)
 	try {
 		const result = await downloadsDB.simpleQuery(`SELECT * FROM downloads WHERE id = ${id}`)
+		console.log({ result })
 		if (result.rowCount && result.rows[0].downloaded) {
 			resolve(null)
 		} else {
 			console.log({ id, filename })
-
 			resolve({ id, filename })
 		}
 	} catch (e) {
 		reject(e)
 	}
-
 })
 
 const filterForAlreadyDownloadedReplays = results => Promise.all(results.forEach(file => getDownloaded(file)))
