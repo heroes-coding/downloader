@@ -1,8 +1,5 @@
 const MemoryStream = require('memorystream')
-
-const { AWS_KEYS_PATH } = require('./config')
 const AWS = require('aws-sdk')
-// AWS.config.loadFromPath(AWS_KEYS_PATH)
 const s3 = new AWS.S3({ apiVersion: 'latest' })
 s3.config.region = 'eu-west-1'
 
