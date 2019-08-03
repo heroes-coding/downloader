@@ -77,6 +77,7 @@ const getDownloaded = ({ id, filename }) => new Promise(async (resolve, reject) 
 		if (result.rowCount && result.rows[0].downloaded) {
 			resolve(null)
 		} else {
+			console.log({ id, filename })
 			resolve({ id, filename })
 		}
 	} catch (e) {
