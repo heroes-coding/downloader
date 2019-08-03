@@ -153,7 +153,6 @@ const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns) => new 
 const downloadReplays = async (nDowns, toDownload) => new Promise(async (resolve, reject) => {
 	const timings = {}
 	const startTime = process.hrtime()
-	arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
 	downloadResults = []
 	replays = {}
 	openDownloads = 0
@@ -219,9 +218,17 @@ const start = async (startIndex) => {
 				continue
 			}
 		}
-		results = results.slice(0, 25) // need to cut down on memory usage significantly.  This should do the trick (250 MB to 75?)
 		// extra checks for empty result or strange result
+		console.log("Before checking for already downloaded replays")
 		const { nDowns, toDownload } = await filterForAlreadyDownloadedReplays(results)
+		if (nDowns === 0) {
+			startIndex = results[results.length - 1].id + 1
+			console.log("All replays already downloaded, checking again...")
+			continue
+		}
+		results = results.slice(0, 25) // need to cut down on memory usage significantly.  This should do the trick (250 MB to 75?)
+		console.log("After checking for already downloaded replays")
+
 		try {
 			await downloadReplays(nDowns, toDownload)
 			if (stopIndex && startIndex >= stopIndex) {
@@ -232,7 +239,6 @@ const start = async (startIndex) => {
 		} catch (e) {
 			console.log(e.message)
 		}
-		arch = null // make sure this thing is released from memory first
 	} // end of forever loop
 }
 
