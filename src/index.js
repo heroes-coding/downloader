@@ -79,7 +79,10 @@ const getDownloaded = ({ id, filename }) => new Promise(async (resolve, reject) 
 	}
 })
 
-const filterForAlreadyDownloadedReplays = results => Promise.all(results.forEach(file => getDownloaded(file)))
+const filterForAlreadyDownloadedReplays = results => {
+	console.log(results)
+	return Promise.all(results.forEach(file => getDownloaded(file)))
+}
 
 const downloadReplays = async (results) => new Promise(async (resolve, reject) => {
 	const nResults = results.length
