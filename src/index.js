@@ -90,8 +90,13 @@ const filterForAlreadyDownloadedReplays = results => Promise.all(results.forEach
 const downloadReplays = async (results) => new Promise(async (resolve, reject) => {
 	const nResults = results.length
 	const lastID = results[nResults - 1].id
-	let toDownload = await filterForAlreadyDownloadedReplays(results)
-	console.log({ toDownload })
+	let toDownload
+	try {
+		toDownload = await filterForAlreadyDownloadedReplays(results)
+	} catch (e) {
+		console.log(e)
+		process.exit(1)
+	}
 	toDownload = toDownload.filter(file => file)
 	const timings = {}
 	const startTime = process.hrtime()
