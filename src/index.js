@@ -33,8 +33,8 @@ if (testRun) startIndex = undefined
 
 let downloadResults = []
 let replays = {}
+
 const downloadAndAppendToArchive = async (fileInfo) => {
-	if (!HOTS) HOTS = await HOTSPromise
 	const { filename, id } = fileInfo
 	try {
 		fileInfo = await getFile(fileInfo)
@@ -99,7 +99,6 @@ const filterForAlreadyDownloadedReplays = results => new Promise(async (resolve,
 	} catch (e) {
 		reject(e)
 	}
-
 })
 
 
@@ -119,8 +118,10 @@ const downloadReplays = async (results) => new Promise(async (resolve, reject) =
 	}
 	while (openDownloads > 0) await asleep(50)
 	// add mmrs
-	replays = await addMMRs(replays)
 	const repKeys = Object.keys(replays)
+	console.log(replays[repKeys[0]])
+
+	replays = await addMMRs(replays)
 	for (let r = 0; r < repKeys.length; r++) {
 		const repKey = repKeys[r]
 		arch.append(zlib.gzipSync(JSON.stringify(replays[repKey]), { level: 1 }), { name: repKey })
@@ -184,6 +185,7 @@ const start = async (startIndex) => {
 	// starts process and loops through api requests endlessly
 	startIndex = await getStartIndex(startIndex)
 	starlog(`Starting to query hotsapi with index ${startIndex}`)
+	HOTS = await HOTSPromise
 	let results
 	// infinite loop
 	while (true) {
@@ -217,7 +219,7 @@ const start = async (startIndex) => {
 				console.log('exiting because got to stop index')
 				process.exit(0)
 			}
-			startIndex = results[results.length - 1].id
+			startIndex = results[results.length - 1].id + 1
 		} catch (e) {
 			console.log(e.message)
 		}
