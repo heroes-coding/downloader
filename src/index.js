@@ -92,7 +92,11 @@ getDownloaded({ id: 17080001, filename: 'ha' })
 getDownloaded({ id: 17080002, filename: 'ha' })
 getDownloaded({ id: 17080003, filename: 'ha' })
 
-const filterForAlreadyDownloadedReplays = results => Promise.all(results.forEach(file => getDownloaded(file)))
+const filterForAlreadyDownloadedReplays = results => {
+	const toDownloadPromises = results.forEach(file => getDownloaded(file))
+	console.log(toDownloadPromises)
+	return Promise.all(toDownloadPromises)
+}
 
 const downloadReplays = async (results) => new Promise(async (resolve, reject) => {
 	const nResults = results.length
