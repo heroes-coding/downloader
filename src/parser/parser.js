@@ -7,9 +7,7 @@ const md5 = require('md5')
 const { Alterac, Tomb, Temple, Shrines, Hanamura, Hollow, Holdout, Battlefield, Garden, Doom, Shire, Bay, Mines, Warhead, Cavern, City, Outpost, Industrial, Checkpoint, Foundry } = require('./mapParsers')
 const mmrLetters = {1: 'q', 3: 'h', 4: 't', 2: 'u', 5: 'q'}
 
-const loopsToS = function (time) {
-  return parseInt((time - 608) / 16)
-}
+const loopsToS = (time) => parseInt((time - 608) / 16)
 const HS = (hash, index) => hash.slice(index * 2, (index + 1) * 2)
 const md5HashConverter = (h) => `${HS(h, 3)}${HS(h, 2)}${HS(h, 1)}${HS(h, 0)}-${HS(h, 5)}${HS(h, 4)}-${HS(h, 7)}${HS(h, 6)}-${HS(h, 8)}${HS(h, 9)}-${HS(h, 10)}${HS(h, 11)}${HS(h, 12)}${HS(h, 13)}${HS(h, 14)}${HS(h, 15)}`
 
@@ -17,7 +15,9 @@ const nickMaps = {'AlteracPass': 19, 'BraxisOutpost': 15, 'ControlPoints': 1, 'S
 const protoProto = require('./protos/61952.json')
 
 let getTalentN = function (talentName, heroN, talentN, HOTS) {
-  if (HOTS.talentN.hasOwnProperty(talentName)) return HOTS.talentN[talentName]
+  if (HOTS.talentN.hasOwnProperty(talentName)) {
+    return HOTS.talentN[talentName]
+  }
   return talentName
 }
 
@@ -56,7 +56,6 @@ function parseFile (file, HOTS) {
           apiHash = md5HashConverter(apiHash)
           const modeId = initData['m_syncLobbyState']['m_gameDescription']['m_gameOptions']['m_ammId']
           gameMode = HOTS.modesDic[modeId]
-          console.log({ modeId, gameMode })
         } catch (err) {
           console.log('Problem with initData for game of build ' + build)
           return resolve(0)
@@ -560,7 +559,6 @@ function parseFile (file, HOTS) {
       }
       thisReplay['r'] = [minSinceLaunch, build, region, gameLength, mapName, gameMode, firstTo10, firstTo20, firstFort, winners]
       thisReplay.hash = hashCode
-      console.log(`Finishing parsing for replay of game mode ${gameMode}`)
       return resolve(thisReplay)
     } catch (err) {
       if (err.name !== 'CorruptedError') console.log(err)
