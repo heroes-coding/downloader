@@ -150,8 +150,7 @@ const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns) => new 
 	}
 })
 
-const downloadReplays = async (results) => new Promise(async (resolve, reject) => {
-	const { nDowns, toDownload } = await filterForAlreadyDownloadedReplays(results)
+const downloadReplays = async (nDowns, toDownload) => new Promise(async (resolve, reject) => {
 	const timings = {}
 	const startTime = process.hrtime()
 	arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
@@ -195,6 +194,7 @@ const start = async (startIndex) => {
 	starlog(`Starting to query hotsapi with index ${startIndex}`)
 	HOTS = await HOTSPromise
 	let results
+	let checkSQS = true
 	// infinite loop
 	while (true) {
 		// initial api query
@@ -221,8 +221,9 @@ const start = async (startIndex) => {
 		}
 		results = results.slice(0, 25) // need to cut down on memory usage significantly.  This should do the trick (250 MB to 75?)
 		// extra checks for empty result or strange result
+		const { nDowns, toDownload } = await filterForAlreadyDownloadedReplays(results)
 		try {
-			await downloadReplays(results) + 1
+			await downloadReplays(nDowns, toDownload)
 			if (stopIndex && startIndex >= stopIndex) {
 				console.log('exiting because got to stop index')
 				process.exit(0)
