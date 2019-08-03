@@ -85,6 +85,9 @@ const getDownloaded = ({ id, filename }) => new Promise(async (resolve, reject) 
 
 const filterForAlreadyDownloadedReplays = results => Promise.all(results.map(file => getDownloaded(file)))
 
+
+
+
 const downloadReplays = async (results) => new Promise(async (resolve, reject) => {
 	const nResults = results.length
 	const lastID = results[nResults - 1].id
@@ -96,19 +99,20 @@ const downloadReplays = async (results) => new Promise(async (resolve, reject) =
 		process.exit(1)
 	}
 	toDownload = toDownload.filter(file => file)
-	const timings = {}
-	const startTime = process.hrtime()
 	const nDowns = toDownload.length
 	if (nDowns === 0) {
 		console.log(`Got ${nResults} results from hotsapi, but none to download...`)
 		return resolve(lastID)
 	} else console.log(`Got ${nResults} results from hotsapi, should be downloading ${nDowns} of them...`)
+
+	const timings = {}
+	const startTime = process.hrtime()
 	arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
 	downloadResults = []
 	replays = {}
 	openDownloads = 0
 	for (let f = 0; f < nDowns; f++) {
-		// while (openDownloads > 5) await asleep(50)
+		while (openDownloads > 5) await asleep(50)
 		openDownloads++
 		downloadAndAppendToArchive(toDownload[f], f)
 	}
@@ -161,7 +165,7 @@ const getStartIndex = startIndex => new Promise(async (resolve, reject) => {
 	try {
 		if (!startIndex) {
 			let result = await downloadsDB.simpleQuery('SELECT max(id) as id FROM downloads')
-			startIndex = result.rows[0].id
+			startIndex = result.rows[0].id + 1
 		} else if (isNaN(startIndex)) {
 			throw new Error(`Start index of ${startIndex} is not a number`)
 		} else {
@@ -185,7 +189,7 @@ const start = async (startIndex) => {
 		// initial api query
 		try {
 			results = await queryReplayData(startIndex)
-			if (results.length < 2) {
+			if (results.length < 1) {
 				// one for last index, too lazy to look into this further.  Jesus I was a messy coder when I wrote this stuff
 				console.log(`Too few results, sleeping for ${sleepTime}ms`)
 				await asleep(sleepTime)
@@ -207,7 +211,7 @@ const start = async (startIndex) => {
 		results = results.slice(0, 25) // need to cut down on memory usage significantly.  This should do the trick (250 MB to 75?)
 		// extra checks for empty result or strange result
 		try {
-			startIndex = await downloadReplays(results)
+			startIndex = await downloadReplays(results) + 1
 			if (stopIndex && startIndex >= stopIndex) {
 				console.log('exiting because got to stop index')
 				process.exit(0)
