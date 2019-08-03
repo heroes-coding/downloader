@@ -90,9 +90,7 @@ const downloadReplays = async (results) => new Promise(async (resolve, reject) =
 	const lastID = results[nResults - 1].id
 	let toDownload
 	try {
-		console.log("Filtering for already downloaded")
 		toDownload = await filterForAlreadyDownloadedReplays(results)
-		console.log("Finishing filtering")
 	} catch (e) {
 		console.log(e)
 		process.exit(1)
