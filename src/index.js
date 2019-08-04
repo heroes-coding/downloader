@@ -68,10 +68,15 @@ const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns, downloa
 	try {
 		replays = await addMMRs(replays)
 		const arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
+		arch.on("entry", data => {
+			console.log("Arch data:", data)
+		})
 		for (let r = 0; r < repKeys.length; r++) {
 			const repKey = repKeys[r]
+			console.log('appending data...')
 			arch.append(zlib.gzipSync(JSON.stringify(replays[repKey]), { level: 1 }), { name: repKey })
 		}
+
 		extractCompressedData(replays, HOTS)
 		await asleep(5000)
 		const output = fs.createWriteStream(saveName)
@@ -82,9 +87,6 @@ const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns, downloa
 				fs.unlinkSync(saveName)
 			})
 		}, 3000)
-		arch.on("entry", data => {
-			console.log("Arch data:", data)
-		})
 		let playerDataZipPath = path.join(STATS_PATH, `${toDownload[0].id}-${toDownload[nDowns - 1].id}.zip`)
 		await saveOpenFiles(playerDataZipPath, stopIndex, savePlayerData)
 		if (savePlayerData)
