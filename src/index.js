@@ -71,17 +71,16 @@ const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns, downloa
 		let openEntries = 0
 		arch.on("entry", (data) => {
 			openEntries--
-			console.log("Done! Open entries: " + openEntries)
 		})
 		for (let r = 0; r < repKeys.length; r++) {
 			const repKey = repKeys[r]
 			arch.append(zlib.gzipSync(JSON.stringify(replays[repKey]), { level: 1 }), { name: repKey })
 			openEntries++
-			console.log('appending data... open entries: ' + openEntries)
 		}
-
 		extractCompressedData(replays, HOTS)
-		await asleep(5000)
+		while (openEntries > 0) {
+			await asleep(50)
+		}
 		const output = fs.createWriteStream(saveName)
 		arch.finalize()
 		arch.pipe(output)
