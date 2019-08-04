@@ -68,13 +68,16 @@ const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns, downloa
 	try {
 		replays = await addMMRs(replays)
 		const arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
-		arch.on("entry", data => {
-			console.log("Arch data:", data)
+		let openEntries = 0
+		arch.on("entry", (data) => {
+			openEntries--
+			console.log("Done! Open entries: " + openEntries)
 		})
 		for (let r = 0; r < repKeys.length; r++) {
 			const repKey = repKeys[r]
-			console.log('appending data...')
 			arch.append(zlib.gzipSync(JSON.stringify(replays[repKey]), { level: 1 }), { name: repKey })
+			openEntries++
+			console.log('appending data... open entries: ' + openEntries)
 		}
 
 		extractCompressedData(replays, HOTS)
