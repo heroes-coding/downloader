@@ -82,6 +82,9 @@ const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns, downloa
 				fs.unlinkSync(saveName)
 			})
 		}, 3000)
+		arch.on("entry", data => {
+			console.log("Arch data:", data)
+		})
 		let playerDataZipPath = path.join(STATS_PATH, `${toDownload[0].id}-${toDownload[nDowns - 1].id}.zip`)
 		await saveOpenFiles(playerDataZipPath, stopIndex, savePlayerData)
 		if (savePlayerData)
