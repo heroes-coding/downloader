@@ -64,7 +64,7 @@ const filterForAlreadyDownloadedReplays = results => new Promise(async (resolve,
 
 
 
-const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns) => new Promise(async (resolve, reject) => {
+const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns, downloadResults) => new Promise(async (resolve, reject) => {
 	try {
 		replays = await addMMRs(replays)
 		const arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
@@ -147,7 +147,7 @@ const downloadReplays = async (nDowns, toDownload) => new Promise(async (resolve
 	const repKeys = Object.keys(replays)
 	let saveName = `/tempDownloads/${toDownload[0].id}-${toDownload[nDowns - 1].id}.zip`
 	console.log('done downloading', timings, saveName, { repKeys: repKeys.length })
-	await decorateReplays(replays, saveName, repKeys, toDownload, nDowns)
+	await decorateReplays(replays, saveName, repKeys, toDownload, nDowns, downloadResults)
 	return resolve(true)
 })
 
