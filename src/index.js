@@ -90,7 +90,7 @@ const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns, downloa
 		await saveOpenFiles(playerDataZipPath, stopIndex, savePlayerData)
 		if (savePlayerData)
 			setTimeout(() => {
-				transferPlayerData(playerDataZipPath).then(() => {
+				transferPlayerData(playerDataZipPath).then(async () => {
 					fs.unlinkSync(playerDataZipPath)
 					if (!stopIndex) {
 						const query = format('INSERT INTO downloads (id,filename,downloaded) VALUES %L', downloadResults)
