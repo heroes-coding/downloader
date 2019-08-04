@@ -64,7 +64,7 @@ const filterForAlreadyDownloadedReplays = results => new Promise(async (resolve,
 
 
 
-const addMMRsExtractAndCondenseReplayInfoSaveToArchive = (replays, saveName, repKeys, toDownload, nDowns) => new Promise(async (resolve, reject) => {
+const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns) => new Promise(async (resolve, reject) => {
 	try {
 		replays = await addMMRs(replays)
 		const arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
@@ -113,9 +113,8 @@ const addMMRsExtractAndCondenseReplayInfoSaveToArchive = (replays, saveName, rep
 const downloadAndParseReplay = async (fileInfo) => new Promise(async (resolve, reject) => {
 	const { filename, id } = fileInfo
 	try {
-
-		fileInfo = await getFile(fileInfo)
 		const file = await getFile(filename)
+		const replay = await parseFile(file, HOTS)
 		if (isNaN(replay)) {
 			resolve({ filename, id, replay })
 		} else {
@@ -148,7 +147,7 @@ const downloadReplays = async (nDowns, toDownload) => new Promise(async (resolve
 	const repKeys = Object.keys(replays)
 	let saveName = `/tempDownloads/${toDownload[0].id}-${toDownload[nDowns - 1].id}.zip`
 	console.log('done downloading', timings, saveName, { repKeys: repKeys.length })
-	await addMMRsExtractAndCondenseReplayInfoSaveToArchive(replays, saveName, repKeys, toDownload, nDowns)
+	await decorateReplays(replays, saveName, repKeys, toDownload, nDowns)
 	return resolve(true)
 })
 
@@ -201,16 +200,13 @@ const start = async (startIndex) => {
 				continue
 			}
 		}
-		// extra checks for empty result or strange result
-		console.log("Before checking for already downloaded replays")
+		results = results.slice(0, 25) // need to cut down on memory usage significantly.  This should do the trick (250 MB to 75?)
 		const { nDowns, toDownload } = await filterForAlreadyDownloadedReplays(results)
 		if (nDowns === 0) {
 			startIndex = results[results.length - 1].id + 1
 			console.log("All replays already downloaded, checking again...")
 			continue
 		}
-		results = results.slice(0, 25) // need to cut down on memory usage significantly.  This should do the trick (250 MB to 75?)
-		console.log("After checking for already downloaded replays")
 
 		try {
 			await downloadReplays(nDowns, toDownload)
