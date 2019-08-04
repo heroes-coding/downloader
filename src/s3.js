@@ -1,6 +1,7 @@
 const MemoryStream = require('memorystream')
 const AWS = require('aws-sdk')
 const s3 = new AWS.S3({ apiVersion: 'latest' })
+const params = { Bucket: 'hotsapi', RequestPayer: 'requester' }
 s3.config.region = 'eu-west-1'
 
 const getFile = async (filename) =>
