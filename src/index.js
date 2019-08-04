@@ -27,9 +27,6 @@ let savePlayerData = false
 let startIndex = process.argv[2]
 let stopIndex = process.argv[3]
 if (stopIndex) stopIndex = parseInt(stopIndex)
-let testRun = startIndex === 'test'
-if (testRun) startIndex = undefined
-
 
 const getDownloaded = ({ id, filename }) => new Promise(async (resolve, reject) => {
 	try {
@@ -95,21 +92,16 @@ const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns, downloa
 			setTimeout(() => {
 				transferPlayerData(playerDataZipPath).then(() => {
 					fs.unlinkSync(playerDataZipPath)
+					if (!stopIndex) {
+						const query = format('INSERT INTO downloads (id,filename,downloaded) VALUES %L', downloadResults)
+						try {
+							await downloadsDB.simpleQuery(query)
+						} catch (e) {
+							return reject(e)
+						}
+					}
 				})
 			}, 3000)
-		if (testRun) {
-			await asleep(3000)
-			process.exit(0)
-		} else {
-			if (!stopIndex) {
-				const query = format('INSERT INTO downloads (id,filename,downloaded) VALUES %L', downloadResults)
-				try {
-					await downloadsDB.simpleQuery(query)
-				} catch (e) {
-					return reject(e)
-				}
-			}
-		}
 		resolve(true)
 	} catch (e) {
 		console.log(e)
