@@ -111,10 +111,11 @@ const addMMRsExtractAndCondenseReplayInfoSaveToArchive = (replays, saveName, rep
 })
 
 const downloadAndParseReplay = async (fileInfo) => new Promise(async (resolve, reject) => {
+	const { filename, id } = fileInfo
 	try {
-		const { filename, id } = fileInfo
+
 		fileInfo = await getFile(fileInfo)
-		const file = await getFile(fileInfo)
+		const file = await getFile(filename)
 		if (isNaN(replay)) {
 			resolve({ filename, id, replay })
 		} else {
