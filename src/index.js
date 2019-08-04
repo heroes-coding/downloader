@@ -21,7 +21,6 @@ const path = require('path')
 
 const HOTSPromise = getHOTS()
 let HOTS
-let openDownloads, arch
 
 let parseFull = true
 let savePlayerData = false
@@ -30,10 +29,6 @@ let stopIndex = process.argv[3]
 if (stopIndex) stopIndex = parseInt(stopIndex)
 let testRun = startIndex === 'test'
 if (testRun) startIndex = undefined
-
-let downloadResults = []
-let replays = {}
-
 
 
 const getDownloaded = ({ id, filename }) => new Promise(async (resolve, reject) => {
@@ -69,42 +64,7 @@ const filterForAlreadyDownloadedReplays = results => new Promise(async (resolve,
 
 
 
-const downloadAndAppendToArchive = async (fileInfo) => {
-	const { filename, id } = fileInfo
-	try {
-		fileInfo = await getFile(fileInfo)
-		const { file } = fileInfo
-
-		if (parseFull) {
-			const replay = await parseFile(file, HOTS)
-			if (isNaN(replay)) replays[filename] = replay
-		} else {
-			const archive = new MPQArchive(file)
-			const header = archive.header.userDataHeader.content
-			const details = archive.readFile('replay.details')
-			const atts = archive.readFile('replay.attributes.events')
-			const init = archive.readFile('replay.initData')
-			const messages = archive.readFile('replay.message.events')
-			const lobby = archive.readFile('replay.server.battlelobby')
-			const trackers = archive.readFile('replay.tracker.events')
-			arch.append(zlib.gzipSync(header, { level: 1 }), { name: `header-${filename}` })
-			arch.append(zlib.gzipSync(details, { level: 1 }), { name: `details-${filename}` })
-			arch.append(zlib.gzipSync(atts, { level: 1 }), { name: `atts-${filename}` })
-			arch.append(zlib.gzipSync(init, { level: 1 }), { name: `init-${filename}` })
-			arch.append(zlib.gzipSync(messages, { level: 1 }), { name: `messages-${filename}` })
-			arch.append(zlib.gzipSync(lobby, { level: 1 }), { name: `lobby-${filename}` })
-			arch.append(zlib.gzipSync(trackers, { level: 1 }), { name: `trackers-${filename}` })
-		}
-		downloadResults.push([id, filename, true])
-	} catch (e) {
-		console.log(e.message)
-		downloadResults.push([id, filename, false])
-	} finally {
-		openDownloads--
-	}
-}
-
-const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns) => new Promise(async (resolve, reject) => {
+const addMMRsExtractAndCondenseReplayInfoSaveToArchive = (replays, saveName, repKeys, toDownload, nDowns) => new Promise(async (resolve, reject) => {
 	try {
 		replays = await addMMRs(replays)
 		const arch = archiver('zip', { zlib: { level: zlib.Z_NO_COMPRESSION } })
@@ -150,22 +110,44 @@ const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns) => new 
 	}
 })
 
+const downloadAndParseReplay = async (fileInfo) => new Promise(async (resolve, reject) => {
+	try {
+		const { filename, id } = fileInfo
+		fileInfo = await getFile(fileInfo)
+		const file = await getFile(fileInfo)
+		if (isNaN(replay)) {
+			resolve({ filename, id, replay })
+		} else {
+			resolve({ filename, id, parseFailure: true })
+		}
+	} catch (e) {
+		console.log(e)
+		resolve({ filename, id })
+	}
+})
+
 const downloadReplays = async (nDowns, toDownload) => new Promise(async (resolve, reject) => {
 	const timings = {}
 	const startTime = process.hrtime()
-	downloadResults = []
-	replays = {}
-	openDownloads = 0
-	for (let f = 0; f < nDowns; f++) {
-		openDownloads++
-		downloadAndAppendToArchive(toDownload[f], f)
-	}
-	while (openDownloads > 0) await asleep(50)
+	const downloadResults = []
+	const replays = {}
+	const results = await Promise.all(toDownload.map(fileInfo => downloadAndParseReplay(fileInfo)))
+	results.forEach(result => {
+		const { id, filename, replay, parseFailure } = result
+		if (replay) {
+			replays[filename] = replay
+			downloadResults.push([id, filename, true])
+		} else if (parseFailure) {
+			downloadResults.push([id, filename, true])
+		} else {
+			downloadResults.push([id, filename, false])
+		}
+	})
 	addTiming(timings, startTime, `${nDowns} took`)
 	const repKeys = Object.keys(replays)
 	let saveName = `/tempDownloads/${toDownload[0].id}-${toDownload[nDowns - 1].id}.zip`
 	console.log('done downloading', timings, saveName, { repKeys: repKeys.length })
-	await decorateReplays(replays, saveName, repKeys, toDownload, nDowns)
+	await addMMRsExtractAndCondenseReplayInfoSaveToArchive(replays, saveName, repKeys, toDownload, nDowns)
 	return resolve(true)
 })
 
