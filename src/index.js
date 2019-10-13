@@ -83,6 +83,7 @@ const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns, downloa
 		arch.pipe(output)
 		setTimeout(() => {
 			transferReplays(saveName).then(() => {
+				console.log('done transfering replays')
 				fs.unlinkSync(saveName)
 			})
 		}, 3000)
@@ -90,11 +91,13 @@ const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns, downloa
 		await saveOpenFiles(playerDataZipPath, stopIndex, savePlayerData)
 		if (savePlayerData)
 			setTimeout(() => {
+				console.log('should be transfering data')
 				transferPlayerData(playerDataZipPath).then(async () => {
 					fs.unlinkSync(playerDataZipPath)
+					console.log('should be unlinking', stopIndex)
 					if (!stopIndex) {
 						const query = format('INSERT INTO downloads (id,filename,downloaded) VALUES %L', downloadResults)
-						console.log(query)
+						console.log('Should be inserting download results into db')
 						try {
 							await downloadsDB.simpleQuery(query)
 						} catch (e) {
