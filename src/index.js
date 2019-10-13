@@ -94,6 +94,7 @@ const decorateReplays = (replays, saveName, repKeys, toDownload, nDowns, downloa
 					fs.unlinkSync(playerDataZipPath)
 					if (!stopIndex) {
 						const query = format('INSERT INTO downloads (id,filename,downloaded) VALUES %L', downloadResults)
+						console.log(query)
 						try {
 							await downloadsDB.simpleQuery(query)
 						} catch (e) {
