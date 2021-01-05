@@ -28,7 +28,7 @@
     "adm-zip": "^0.4.11",
     "archiver": "^2.1.1",
     "aws-sdk": "^2.222.1",
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "big-integer": "^1.6.27",
     "body-parser": "^1.18.3",
     "chokidar": "^2.0.3",
