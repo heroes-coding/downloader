@@ -34,7 +34,7 @@
     "chokidar": "^2.0.3",
     "cookie-parser": "^1.4.3",
     "empeeku": "^1.0.2",
-    "express": "^4.16.3",
+    "express": "^4.17.3",
     "fnv-plus": "^1.2.12",
     "is-buffer": "^2.0.2",
     "lz-string": "^1.4.4",
